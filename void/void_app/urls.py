@@ -18,5 +18,5 @@ from django.urls import path, include
 from . import views
 
 urlpatterns = [
-    path("/random_picture", views.get_random_picture())
+    path("random_picture", views.get_random_picture)
 ]
