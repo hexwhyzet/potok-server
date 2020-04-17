@@ -4,4 +4,6 @@ from django.http import HttpResponse
 
 
 def get_random_picture(request):
-    return HttpResponse(Meme.objects.get(id=1).meme_picture)
+    with open(str(Meme.objects.get(id=1).meme_picture), "rb") as f:
+        return HttpResponse(f.read(), content_type="image/jpg")
+
