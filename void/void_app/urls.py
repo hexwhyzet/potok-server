@@ -15,6 +15,8 @@ Including another URLconf
 """
 from django.urls import path, include
 
-urlpatterns = [
+from . import views
 
+urlpatterns = [
+    path("/random_picture", views.get_random_picture())
 ]
