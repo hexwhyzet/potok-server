@@ -5,10 +5,18 @@
     <title>Memes feed</title>
 </head>
 <body>
-    <img src="{{ mem.meme_picture.url }}">
-    <a href="random_picture"> СтрелОчка </a>
-    <form action="like_picture/{{ mem.id }}" method="post">
-        <p><input type="submit" value="Like"></p>
-    </form>
+<img src="{{ mem.meme_picture.url }}">
+<a href="random_picture"> СтрелОчка </a>
+<button id="like">Like</button>
 </body>
+<script>
+    $(document).ready(function () {
+        $("#like").click(function () {
+            $.ajax({
+                type: "POST",
+                url: "127.0.0.1/like_picture/" + "{{ mem.id }}"
+            })
+        })
+    });
+</script>
 </html>

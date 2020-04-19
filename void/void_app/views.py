@@ -22,4 +22,3 @@ def get_random_object_by_type(object_type):
 def add_like_to_meme(request, meme_id):
     Meme.objects.all().filter(id=meme_id).first().add_like()
     return JsonResponse({'status': 'ok'})
-
