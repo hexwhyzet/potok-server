@@ -3,6 +3,7 @@ from .models import Meme
 from django.http import HttpResponse
 from django.template import loader
 from random import randint
+from django.http import JsonResponse
 
 
 def get_random_picture(request):
@@ -16,3 +17,9 @@ def get_random_picture(request):
 
 def get_random_object_by_type(object_type):
     return object_type.objects.order_by("?").first
+
+
+def add_like_to_meme(request, meme_id):
+    Meme.objects.all().filter(id=meme_id).first().add_like()
+    return JsonResponse({'status': 'ok'})
+
