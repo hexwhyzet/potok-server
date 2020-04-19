@@ -13,3 +13,4 @@ class Meme(models.Model):
 
     def add_like(self):
         self.meme_likes += 1
+        self.save()
