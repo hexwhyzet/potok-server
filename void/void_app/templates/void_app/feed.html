@@ -7,16 +7,17 @@
 <body>
 <img src="{{ mem.meme_picture.url }}">
 <a href="random_picture"> СтрелОчка </a>
-<button id="like">Like</button>
+<input id="like" type="button" value="Like">
 </body>
 <script>
     $(document).ready(function () {
-        $("#like").click(function () {
+        $("#like").onclick = function () {
+            console.log(1);
             $.ajax({
                 type: "POST",
                 url: "127.0.0.1/like_picture/" + "{{ mem.id }}"
             })
-        })
+        }
     });
 </script>
 </html>
