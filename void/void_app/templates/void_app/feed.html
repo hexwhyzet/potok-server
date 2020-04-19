@@ -11,13 +11,10 @@
 <input id="like" type="button" value="Like">
 </body>
 <script>
-    $("#like").onclick = function () {
-        console.log(1);
-        alert(1);
+    $("#like").click (function () {
         $.ajax({
-            type: "POST",
-            url: "127.0.0.1/like_picture/" + "{{ mem.id }}"
+            url: "like_picture/" + "{{ mem.id }}"
         })
-    }
+    })
 </script>
 </html>
