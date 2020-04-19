@@ -6,9 +6,13 @@ from random import randint
 
 
 def get_random_picture(request):
-    mem = Meme.objects.get(id=randint(3, 4))
+    mem = get_random_object_by_type(Meme)
     template = loader.get_template('void_app/feed.html')
     context = {
         'mem': mem,
     }
     return HttpResponse(template.render(context))
+
+
+def get_random_object_by_type(object_type):
+    return object_type.objects.order_by("?").first
