@@ -16,7 +16,6 @@
     $(document).ready(function () {
         $("#like").click(function () {
             $.ajax({
-                type: "POST",
                 url: "like_picture/" + "{{ mem.id }}"
             })
         });
