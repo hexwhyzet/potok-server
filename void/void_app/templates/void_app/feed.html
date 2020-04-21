@@ -4,15 +4,27 @@
     <meta charset="UTF-8">
     <title>Memes feed</title>
     <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.4.1.min.js"></script>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'feed_page/style.css' %}"/>
 </head>
 <body>
-<img src="{{ mem.meme_picture.url }}">
-<a href="random_picture"> СтрелОчка </a>
-<input id="like" type="button" value="Like">
+<div class="container">
+    <div class="picture">
+        <img class="icon" src="{{ mem.meme_picture.url }}">
+    </div>
+    <div class="tools">
+        <div class="next">
+            <a href="random_picture">
+                <img class="icon" src="{% static 'feed_page/icons/play_white.svg' %}">
+            </a>
+        </div>
+        <div class="like">
+            <input id="like" class="icon" type="image" src="{% static 'feed_page/icons/heart_white.svg' %}">
+        </div>
+    </div>
+</div>
 </body>
 <script>
-
-
     $(document).ready(function () {
         $("#like").click(function () {
             $.ajax({
