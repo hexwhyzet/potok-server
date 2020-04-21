@@ -1,6 +1,11 @@
 import requests
 import json
-from .models import Meme
+import os
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "void.settings")
+import django
+django.setup()
+from void_app.models import Meme
 
 
 def meme_json_parser(meme_data):
@@ -9,7 +14,7 @@ def meme_json_parser(meme_data):
         picture_url = meme['photo']['link']
         pic_name = meme['post_id']
         pic_path = save_picture_from_link(picture_url, pic_name)
-        Meme.objects.create_meme(meme_data, pic_path)
+        Meme.objects.create_meme(meme, pic_path).save()
 
 
 def save_picture_from_link(url, pic_name):
@@ -21,6 +26,6 @@ def save_picture_from_link(url, pic_name):
         return pic_path
 
 
-with open('meme_data_json.json', 'r') as json_cont:
+with open('D:\\ruthless-void\\void\\void_app\\meme_data_json.json', 'r') as json_cont:
     cont = json_cont.read()
     meme_json_parser(cont)
