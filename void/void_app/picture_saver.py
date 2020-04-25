@@ -1,4 +1,6 @@
 import json
+import os
+from pathlib import Path
 
 import requests
 
@@ -14,15 +16,17 @@ def meme_json_parser(meme_data):
     for meme in meme_data:
         picture_url = meme['photo']['link']
         pic_name = meme['post_id']
-        pic_path = save_picture_from_link(picture_url, pic_name)
+        source_id = meme['source_id']
+        pic_path = download_picture(picture_url, pic_name, source_id)
         pic_path = pic_path[6:]
         Meme.objects.create_meme(meme, pic_path).save()
 
 
-def save_picture_from_link(url, pic_name):
+def download_picture(url, pic_name, source_id):
     response = requests.get(url)
     if response.status_code == 200:
-        pic_path = 'media/saved_pics/' + str(pic_name) + '.png'
-        with open(pic_path, 'wb') as out_file:
+        Path(f"media/{source_id}").mkdir(parents=True, exist_ok=True)
+        pic_path = f"media/{source_id}/{str(pic_name)}.png"
+        with open(pic_path, 'wb+') as out_file:
             out_file.write(response.content)
         return pic_path

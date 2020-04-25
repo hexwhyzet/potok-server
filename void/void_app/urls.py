@@ -20,5 +20,5 @@ from . import views
 urlpatterns = [
     path("random_picture", views.get_random_picture),
     path("like_picture/<int:meme_id>", views.add_like_to_meme),
-    path("post_posts/<path:post_json_info>", views.update_memes_db)
+    path("send_posts", views.update_memes_db)
 ]
