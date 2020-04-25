@@ -32,6 +32,12 @@
     opacity: 0.8;
 }
 
+#image_url {
+    height: 0;
+    width: 0;
+    transform: translateX(-500000%) translateY(-500000%);
+}
+
 .picture {
     position: absolute;
     width: inherit;
@@ -47,4 +53,6 @@
     max-height: 100%;
     z-index: 1;
 }
+
+
 

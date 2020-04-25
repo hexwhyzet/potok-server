@@ -6,12 +6,18 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import Meme
 from .picture_saver import meme_json_parser
 
+from .config import Secrets, Config
+
+secrets = Secrets()
+config = Config()
+
 
 def get_random_picture(request):
     mem = get_random_object_by_type(Meme)
     template = loader.get_template('void_app/feed.html')
     context = {
         'mem': mem,
+        'server_url': config["main_server_url"]
     }
     return HttpResponse(template.render(context))
 

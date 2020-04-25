@@ -15,16 +15,36 @@
     <div class="tools">
         <div class="next">
             <a href="random_picture">
-                <img class="icon" src="{% static 'feed_page/icons/play_white.svg' %}">
+                <img class="icon" src="{% static 'feed_page/icons/play_new_white.svg' %}">
             </a>
         </div>
         <div class="like">
-            <input id="like" class="icon" type="image" src="{% static 'feed_page/icons/heart_white.svg' %}">
+            <input id="like" class="icon" type="image" src="{% static 'feed_page/icons/heart_new_white.svg' %}">
+        </div>
+        <div class="share">
+            <input id="share" class="icon copy" type="image" src="{% static 'feed_page/icons/share_white.svg' %}">
+            <textarea id="image_url">{{ server_url }}{{ mem.picture.url }}</textarea>
         </div>
     </div>
 </div>
 </body>
 <script>
+    var copyTextareaBtn = document.querySelector('.copy');
+
+    copyTextareaBtn.addEventListener('click', function (event) {
+        var copyTextarea = document.querySelector('#image_url');
+        copyTextarea.focus();
+        copyTextarea.select();
+
+        try {
+            var successful = document.execCommand('copy');
+            var msg = successful ? 'successful' : 'unsuccessful';
+            console.log('Copying text command was ' + msg);
+        } catch (err) {
+            console.log('Oops, unable to copy');
+        }
+    });
+
     $(document).ready(function () {
         $("#like").click(function () {
             $.ajax({
