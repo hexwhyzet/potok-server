@@ -1,13 +1,9 @@
-from django.shortcuts import render
-from .models import Meme
 from django.http import HttpResponse
-from django.template import loader
-from random import randint
 from django.http import JsonResponse
-import sys
-sys.path.insert(0, 'D:\\ruthless-void\\void')
+from django.template import loader
 
-from picture_saver import meme_json_parser
+from .models import Meme
+from .picture_saver import meme_json_parser
 
 
 def get_random_picture(request):
