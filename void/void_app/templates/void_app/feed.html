@@ -17,12 +17,15 @@
             <a href="random_picture">
                 <img class="icon" src="{% static 'feed_page/icons/play_new_white.svg' %}">
             </a>
+            <div class="shadow"></div>
         </div>
         <div class="like">
             <input id="like" class="icon" type="image" src="{% static 'feed_page/icons/heart_new_white.svg' %}">
+            <div class="shadow"></div>
         </div>
         <div class="share">
             <input id="share" class="icon copy" type="image" src="{% static 'feed_page/icons/share_white.svg' %}">
+            <div class="shadow"></div>
             <textarea id="image_url">{{ server_url }}{{ mem.picture.url }}</textarea>
         </div>
     </div>
