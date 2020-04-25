@@ -9,7 +9,6 @@ from .picture_saver import meme_json_parser
 
 def get_random_picture(request):
     mem = get_random_object_by_type(Meme)
-    print(mem)
     template = loader.get_template('void_app/feed.html')
     context = {
         'mem': mem,
@@ -28,8 +27,6 @@ def add_like_to_meme(request, meme_id):
 
 @csrf_exempt
 def update_memes_db(request):
-    print(request)
     post_json = request.POST["archive"]
-    print(post_json)
     meme_json_parser(post_json)
     return JsonResponse({'status': 'ok'})
