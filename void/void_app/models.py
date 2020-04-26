@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.conf import settings
 
 # Create your models here.
 
@@ -30,3 +30,13 @@ class Meme(models.Model):
     def add_like(self):
         self.likes += 1
         self.save()
+
+
+class Profile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.CASCADE)
+    ip = models.CharField(max_length=100)
+    seen_memes = models.ManyToManyField(Meme, related_name='profile')
+
+    def add_ip(self, ip):
+        self.ip = ip
+
