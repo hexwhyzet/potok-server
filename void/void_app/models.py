@@ -35,7 +35,7 @@ class Meme(models.Model):
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.CASCADE)
     ip = models.CharField(max_length=100)
-    seen_memes = models.ManyToManyField(Meme, related_name='profile')
+    seen_memes = models.ManyToManyField(Meme, related_name='profile', blank=True)
 
     def add_ip(self, ip):
         self.ip = ip

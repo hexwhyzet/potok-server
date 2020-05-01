@@ -16,11 +16,12 @@ config = Config()
 
 def get_random_picture(request):
     ip = log_in_user(request)
-    mem = Meme.objects.exclude(profile__ip=ip).order_by("?").first()
-    # mem = get_random_object_by_type(Meme)
+    meme = Meme.objects.exclude(profile__ip=ip).order_by("?").first()
+    profile = Profile.objects.get(ip=ip)
+    profile.seen_memes.add(meme)
     template = loader.get_template('void_app/feed.html')
     context = {
-        'mem': mem,
+        'mem': meme,
         'server_url': config["main_server_url"]
     }
     return HttpResponse(template.render(context))
@@ -61,4 +62,4 @@ def log_in_user(request):
         profile.add_ip(ip)
         profile.user = new_user
         profile.save()
-        return ip
+    return ip
