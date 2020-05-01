@@ -11,8 +11,9 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
-from .config import Secrets
+from .config import Secrets, Config
 
+config = Config()
 secrets = Secrets()
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -27,7 +28,7 @@ SECRET_KEY = secrets["django_secret_key"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [config["main_server_ip"]]
 
 # Application definition
 
