@@ -1,8 +1,9 @@
 from django.contrib import admin
-from .models import Profile
+
+from .models import Profile, Club, Meme
 
 # Register your models here.
-from .models import Meme
 
 admin.site.register(Meme)
 admin.site.register(Profile)
+admin.site.register(Club)
