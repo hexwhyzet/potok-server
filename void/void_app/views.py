@@ -27,6 +27,19 @@ def get_random_picture(request):
     return HttpResponse(template.render(context))
 
 
+def get_random_picture_mobile(request):
+    ip = log_in_user(request)
+    meme = Meme.objects.exclude(profile__ip=ip).order_by("?").first()
+    profile = Profile.objects.get(ip=ip)
+    profile.seen_memes.add(meme)
+    template = loader.get_template('void_app/feed_mobile.html')
+    context = {
+        'mem': meme,
+        'server_url': config["main_server_url"]
+    }
+    return HttpResponse(template.render(context))
+
+
 def get_random_object_by_type(object_type):
     return object_type.objects.order_by("?").first()
 
