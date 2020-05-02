@@ -10,7 +10,7 @@
 <body>
 <div class="container">
     <div class="picture">
-        <img src="{{ mem.picture.url }}">
+        <img src="{{ meme.picture.url }}">
     </div>
     <div class="tools">
         <div class="next">
@@ -26,7 +26,7 @@
         <div class="share">
             <input id="share" class="icon copy" type="image" src="{% static 'feed_page/icons/share_white.svg' %}">
             <div class="shadow"></div>
-            <textarea id="image_url">{{ server_url }}{{ mem.picture.url }}</textarea>
+            <textarea id="image_url">{{ server_url }}{{ meme.picture.url }}</textarea>
         </div>
     </div>
 </div>
@@ -51,7 +51,7 @@
     $(document).ready(function () {
         $("#like").click(function () {
             $.ajax({
-                url: "like_picture/" + "{{ mem.id }}"
+                url: "like_picture/" + "{{ meme.id }}"
             })
         });
     });

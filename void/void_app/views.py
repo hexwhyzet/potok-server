@@ -14,30 +14,32 @@ secrets = Secrets()
 config = Config()
 
 
-def get_random_picture(request):
-    ip = log_in_user(request)
-    meme = Meme.objects.exclude(profile__ip=ip).order_by("?").first()
-    profile = Profile.objects.get(ip=ip)
-    profile.seen_memes.add(meme)
+def view_random_picture(request):
+    profile = log_in_user(request)
+    meme = random_picture(profile)
     template = loader.get_template('void_app/feed.html')
     context = {
-        'mem': meme,
+        'meme': meme,
         'server_url': config["main_server_url"]
     }
     return HttpResponse(template.render(context))
 
 
-def get_random_picture_mobile(request):
-    ip = log_in_user(request)
-    meme = Meme.objects.exclude(profile__ip=ip).order_by("?").first()
-    profile = Profile.objects.get(ip=ip)
-    profile.seen_memes.add(meme)
+def view_random_picture_mobile(request):
+    profile = log_in_user(request)
+    meme = random_picture(profile)
     template = loader.get_template('void_app/feed_mobile.html')
     context = {
-        'mem': meme,
+        'meme': meme,
         'server_url': config["main_server_url"]
     }
     return HttpResponse(template.render(context))
+
+
+def random_picture(profile):
+    meme = Meme.objects.exclude(profile=profile).order_by("?").first()
+    profile.seen_memes.add(meme)
+    return meme
 
 
 def get_random_object_by_type(object_type):
@@ -75,4 +77,4 @@ def log_in_user(request):
         profile.add_ip(ip)
         profile.user = new_user
         profile.save()
-    return ip
+    return Profile.objects.filter(ip=ip).first()
