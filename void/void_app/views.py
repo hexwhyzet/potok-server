@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
 from random import randint
-
+from django.shortcuts import redirect
 from .models import Meme, Profile
 from django.contrib.auth.models import User
 from .picture_saver import meme_json_parser
@@ -12,6 +12,12 @@ from .config import Secrets, Config
 
 secrets = Secrets()
 config = Config()
+
+
+def view_random_picture_url(request):
+    profile = log_in_user(request)
+    meme = random_picture(profile)
+    return redirect(f"{config['main_server_url']}{meme.picture.url}")
 
 
 def view_random_picture(request):

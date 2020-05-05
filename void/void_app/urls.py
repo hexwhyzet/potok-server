@@ -18,6 +18,7 @@ from django.urls import path, include
 from . import views
 
 urlpatterns = [
+    path("random_picture_url", views.view_random_picture_url),
     path("random_picture", views.view_random_picture),
     path("random_picture_mobile", views.view_random_picture_mobile),
     path("like_picture/<int:meme_id>", views.add_like_to_meme),

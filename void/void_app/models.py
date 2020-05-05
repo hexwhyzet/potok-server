@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-
+from .functions import id_gen
 
 # Create your models here.
 
@@ -22,6 +22,7 @@ class Club(models.Model):
 
 
 class Meme(models.Model):
+    # id = models.CharField(max_length=6, primary_key=True, default=id_gen())
     source_name = models.CharField(max_length=100)
     picture = models.ImageField(upload_to='saved_pics', default="")
     pic_size = models.PositiveIntegerField(default=0)
