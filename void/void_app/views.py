@@ -14,6 +14,16 @@ secrets = Secrets()
 config = Config()
 
 
+def random_picture_app(request):
+    profile = log_in_user(request)
+    meme = random_picture(profile)
+    answer = {
+        "picture_url": f"{config['main_server_url']}{meme.picture.url}",
+        "like_number": meme.likes,
+    }
+    return JsonResponse(answer)
+
+
 def view_random_picture_url(request):
     profile = log_in_user(request)
     meme = random_picture(profile)
