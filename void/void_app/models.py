@@ -2,13 +2,11 @@ from django.db import models
 from django.conf import settings
 from .functions import id_gen
 
-# Create your models here.
-
 
 class MemeManager(models.Manager):
     def create_meme(self, meme_data, meme_picture, club):
         meme = self.create()
-        meme.id = id_gen(length=6)
+        # meme.id = id_gen(length=6)
         meme.source_name = "vk"
         meme.source_id = str(meme_data['post_id'])
         meme.picture = meme_picture
@@ -23,7 +21,7 @@ class Club(models.Model):
 
 
 class Meme(models.Model):
-    id = models.CharField(max_length=6, primary_key=True, default=id_gen)
+    # id = models.CharField(max_length=6, primary_key=True, default=id_gen)
     source_name = models.CharField(max_length=100)
     picture = models.ImageField(upload_to='saved_pics', default="")
     size = models.PositiveIntegerField(default=0)
