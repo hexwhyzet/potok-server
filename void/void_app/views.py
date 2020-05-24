@@ -14,6 +14,12 @@ secrets = Secrets()
 config = Config()
 
 
+def share_picture(request, club_id, source_name):
+    context = {"image_url": f"{config['main_server_url']}/media/{club_id}/{source_name}"}
+    template = loader.get_template("void_app/share.html")
+    return HttpResponse(template.render(context))
+
+
 def random_picture_app(request):
     profile = log_in_user(request)
     meme = random_picture(profile)

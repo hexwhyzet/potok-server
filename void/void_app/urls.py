@@ -18,6 +18,7 @@ from django.urls import path, include
 from . import views
 
 urlpatterns = [
+    path("share/<str:club_id>/<str:source_name>", views.share_picture),
     path("random_picture_app", views.random_picture_app),
     path("random_picture_url", views.view_random_picture_url),
     path("random_picture", views.view_random_picture),
