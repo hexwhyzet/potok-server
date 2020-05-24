@@ -8,10 +8,11 @@ from .functions import id_gen
 class MemeManager(models.Manager):
     def create_meme(self, meme_data, meme_picture, club):
         meme = self.create()
+        meme.id = id_gen(length=6)
         meme.source_name = "vk"
         meme.source_id = str(meme_data['post_id'])
         meme.picture = meme_picture
-        meme.pic_size = meme_data['photo']['size']
+        meme.size = meme_data['photo']['size']
         meme.date = meme_data['date']
         meme.club = club
         return meme
@@ -22,10 +23,10 @@ class Club(models.Model):
 
 
 class Meme(models.Model):
-    # id = models.CharField(max_length=6, primary_key=True, default=id_gen())
+    id = models.CharField(max_length=6, primary_key=True, default=id_gen)
     source_name = models.CharField(max_length=100)
     picture = models.ImageField(upload_to='saved_pics', default="")
-    pic_size = models.PositiveIntegerField(default=0)
+    size = models.PositiveIntegerField(default=0)
     date = models.PositiveIntegerField(default=0)
     club = models.ForeignKey(Club, on_delete=models.CASCADE, blank=True, null=True)
 
