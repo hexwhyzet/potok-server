@@ -15,7 +15,7 @@ config = Config()
 
 
 def share_picture(request, club_id, source_name):
-    context = {"image_url": f"{config['main_server_url']}/media/{club_id}/{source_name}"}
+    context = {"image_url": f"{config['image_server_url']}/{club_id}/{source_name}"}
     template = loader.get_template("void_app/share.html")
     return HttpResponse(template.render(context))
 
@@ -24,7 +24,7 @@ def random_picture_app(request):
     profile = log_in_user(request)
     meme = random_picture(profile)
     answer = {
-        "picture_url": f"{config['main_server_url']}{meme.picture.url}",
+        "picture_url": f"{config['image_server_url']}{meme.picture.url}",
         "like_number": meme.likes,
     }
     return JsonResponse(answer)
@@ -33,7 +33,7 @@ def random_picture_app(request):
 def view_random_picture_url(request):
     profile = log_in_user(request)
     meme = random_picture(profile)
-    return redirect(f"{config['main_server_url']}{meme.picture.url}")
+    return redirect(f"{config['image_server_url']}{meme.picture.url}")
 
 
 def view_random_picture(request):
@@ -42,7 +42,8 @@ def view_random_picture(request):
     template = loader.get_template('void_app/feed.html')
     context = {
         'meme': meme,
-        'server_url': config["main_server_url"]
+        'main_server_url': config["main_server_url"],
+        'picture_server_url': config["image_server_url"]
     }
     return HttpResponse(template.render(context))
 
@@ -53,7 +54,8 @@ def view_random_picture_mobile(request):
     template = loader.get_template('void_app/feed_mobile.html')
     context = {
         'meme': meme,
-        'server_url': config["main_server_url"]
+        'main_server_url': config["main_server_url"],
+        'picture_server_url': config["image_server_url"]
     }
     return HttpResponse(template.render(context))
 

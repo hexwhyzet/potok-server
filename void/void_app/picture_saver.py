@@ -1,7 +1,7 @@
 import json
-import os
 from pathlib import Path
 
+import boto3
 import requests
 
 from .config import Config, Secrets
@@ -18,12 +18,22 @@ def meme_json_parser(meme_data):
         pic_name = meme['post_id']
         source_id = meme['source_id']
         club, _ = Club.objects.get_or_create(id=source_id)
-        pic_path = download_picture(picture_url, pic_name, source_id)
-        pic_path = pic_path[6:]
+        pic_path = "/" + download_picture_to_bucket(picture_url, pic_name, source_id)
         Meme.objects.create_meme(meme, pic_path, club).save()
 
 
-def download_picture(url, pic_name, source_id):
+def download_picture_to_bucket(url, pic_name, source_id):
+    response = requests.get(url)
+    if response.status_code == 200:
+        s3 = boto3.resource(service_name='s3', endpoint_url='https://storage.yandexcloud.net')
+        bucket = s3.Bucket('void-bucket')
+        data = response.content
+        image_path = f"{source_id}/{str(pic_name)}.png"
+        bucket.put_object(Key=image_path, Body=data)
+        return image_path
+
+
+def download_picture_locally(url, pic_name, source_id):
     response = requests.get(url)
     if response.status_code == 200:
         Path(f"media/{source_id}").mkdir(parents=True, exist_ok=True)
