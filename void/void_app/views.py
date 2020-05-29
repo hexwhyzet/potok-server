@@ -24,7 +24,7 @@ def random_picture_app(request):
     profile = log_in_user(request)
     meme = random_picture(profile)
     answer = {
-        "picture_url": f"{config['image_server_url']}{meme.picture.url}",
+        "picture_url": f"{config['image_server_url']}{meme.picture_url}",
         "like_number": meme.likes,
     }
     return JsonResponse(answer)
@@ -33,7 +33,7 @@ def random_picture_app(request):
 def view_random_picture_url(request):
     profile = log_in_user(request)
     meme = random_picture(profile)
-    return redirect(f"{config['image_server_url']}{meme.picture.url}")
+    return redirect(f"{config['image_server_url']}{meme.picture_url}")
 
 
 def view_random_picture(request):
