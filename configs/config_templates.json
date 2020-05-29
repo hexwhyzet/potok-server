@@ -2,5 +2,6 @@
   "path_to_project": "",
   "main_server_url": "",
   "main_server_ip": "",
-  "main_server_port": ""
+  "main_server_port": "",
+  "image_server_url": ""
 }
