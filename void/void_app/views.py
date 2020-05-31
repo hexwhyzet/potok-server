@@ -26,6 +26,8 @@ def subscription_picture_app(request):
     answer = {
         "picture_url": f"{config['image_server_url']}{meme.picture_url}",
         "like_number": meme.likes,
+        "picture_id": meme.id,
+        "like_url": f"{config['main_server_url']}/like_picture/{meme.id}",
     }
     return JsonResponse(answer)
 
@@ -36,7 +38,8 @@ def random_picture_app(request):
     answer = {
         "picture_url": f"{config['image_server_url']}{meme.picture_url}",
         "like_number": meme.likes,
-        "picture_id": meme.id
+        "picture_id": meme.id,
+        "like_url": f"{config['main_server_url']}/like_picture/{meme.id}",
     }
     return JsonResponse(answer)
 
