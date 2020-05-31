@@ -26,6 +26,7 @@ def random_picture_app(request):
     answer = {
         "picture_url": f"{config['image_server_url']}{meme.picture_url}",
         "like_number": meme.likes,
+        "picture_id": meme.id
     }
     return JsonResponse(answer)
 
