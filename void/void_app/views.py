@@ -102,8 +102,15 @@ def get_random_object_by_type(object_type):
     return object_type.objects.order_by("?").first()
 
 
-def add_like_to_meme(request, meme_id):
-    Meme.objects.all().filter(id=meme_id).first().add_like()
+def switch_like(request, meme_id):
+    profile = log_in_user(request)
+    meme = Meme.objects.filter(id=meme_id).first()
+    if not profile.liked_memes.filter(id=meme_id).exist():
+        meme.add_like()
+        profile.liked_memes.add(meme)
+    else:
+        meme.remove_like()
+        profile.liked_memes.remove(meme)
     return JsonResponse({'status': 'ok'})
 
 

@@ -37,11 +37,16 @@ class Meme(models.Model):
         self.likes += 1
         self.save()
 
+    def remove_like(self):
+        self.likes -= 1
+        self.save()
+
 
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.CASCADE)
     ip = models.CharField(max_length=100)
     seen_memes = models.ManyToManyField(Meme, related_name='profile', blank=True)
+    liked_memes = models.ManyToManyField(Meme, related_name='profile', blank=True)
     subscriptions = models.ManyToManyField(Club, related_name='profile', blank=True)
 
     def add_ip(self, ip):

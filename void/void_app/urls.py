@@ -24,6 +24,6 @@ urlpatterns = [
     path("random_picture", views.view_random_picture),
     path("subscription_picture", views.view_subscription_picture),
     path("random_picture_mobile", views.view_random_picture_mobile),
-    path("like_picture/<int:meme_id>", views.add_like_to_meme),
+    path("like_picture/<int:meme_id>", views.switch_like),
     path("send_posts", views.update_memes_db)
 ]
