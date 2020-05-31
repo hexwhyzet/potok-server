@@ -19,9 +19,10 @@ from . import views
 
 urlpatterns = [
     path("share/<str:club_id>/<str:source_name>", views.share_picture),
+    path("subscription_picture_app", views.subscription_picture_app),
     path("random_picture_app", views.random_picture_app),
-    path("random_picture_url", views.view_random_picture_url),
     path("random_picture", views.view_random_picture),
+    path("subscription_picture", views.view_subscription_picture),
     path("random_picture_mobile", views.view_random_picture_mobile),
     path("like_picture/<int:meme_id>", views.add_like_to_meme),
     path("send_posts", views.update_memes_db)

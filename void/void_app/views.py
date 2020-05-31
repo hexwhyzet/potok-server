@@ -20,6 +20,16 @@ def share_picture(request, club_id, source_name):
     return HttpResponse(template.render(context))
 
 
+def subscription_picture_app(request):
+    profile = log_in_user(request)
+    meme = subscription_picture(profile)
+    answer = {
+        "picture_url": f"{config['image_server_url']}{meme.picture_url}",
+        "like_number": meme.likes,
+    }
+    return JsonResponse(answer)
+
+
 def random_picture_app(request):
     profile = log_in_user(request)
     meme = random_picture(profile)
@@ -49,6 +59,18 @@ def view_random_picture(request):
     return HttpResponse(template.render(context))
 
 
+def view_subscription_picture(request):
+    profile = log_in_user(request)
+    meme = subscription_picture(profile)
+    template = loader.get_template('void_app/feed.html')
+    context = {
+        'meme': meme,
+        'main_server_url': config["main_server_url"],
+        'picture_server_url': config["image_server_url"]
+    }
+    return HttpResponse(template.render(context))
+
+
 def view_random_picture_mobile(request):
     profile = log_in_user(request)
     meme = random_picture(profile)
@@ -59,6 +81,12 @@ def view_random_picture_mobile(request):
         'picture_server_url': config["image_server_url"]
     }
     return HttpResponse(template.render(context))
+
+
+def subscription_picture(profile):
+    meme = Meme.objects.filter(club__profile=profile).exclude(profile=profile).order_by("?").first()
+    profile.seen_memes.add(meme)
+    return meme
 
 
 def random_picture(profile):
