@@ -93,7 +93,7 @@ def subscription_picture(profile):
 
 
 def random_picture(profile):
-    meme = Meme.objects.exclude(profile=profile).order_by("?").first()
+    meme = Meme.objects.exclude(seen_profile=profile).order_by("?").first()
     profile.seen_memes.add(meme)
     return meme
 
@@ -105,7 +105,7 @@ def get_random_object_by_type(object_type):
 def switch_like(request, meme_id):
     profile = log_in_user(request)
     meme = Meme.objects.filter(id=meme_id).first()
-    if not profile.liked_memes.filter(id=meme_id).exist():
+    if not profile.liked_memes.filter(id=meme_id).exists():
         meme.add_like()
         profile.liked_memes.add(meme)
     else:

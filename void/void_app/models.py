@@ -45,8 +45,8 @@ class Meme(models.Model):
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.CASCADE)
     ip = models.CharField(max_length=100)
-    seen_memes = models.ManyToManyField(Meme, related_name='profile', blank=True)
-    liked_memes = models.ManyToManyField(Meme, related_name='profile', blank=True)
+    seen_memes = models.ManyToManyField(Meme, related_name='seen_profile', blank=True)
+    liked_memes = models.ManyToManyField(Meme, related_name='liked_profile', blank=True)
     subscriptions = models.ManyToManyField(Club, related_name='profile', blank=True)
 
     def add_ip(self, ip):
