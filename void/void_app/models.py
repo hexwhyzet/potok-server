@@ -47,7 +47,7 @@ class Profile(models.Model):
     ip = models.CharField(max_length=100)
     seen_memes = models.ManyToManyField(Meme, related_name='seen_profile', blank=True)
     liked_memes = models.ManyToManyField(Meme, related_name='liked_profile', blank=True)
-    subscriptions = models.ManyToManyField(Club, related_name='profile', blank=True)
+    subscriptions = models.ManyToManyField(Club, related_name='sub_profile', blank=True)
 
     def add_ip(self, ip):
         self.ip = ip

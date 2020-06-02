@@ -87,7 +87,7 @@ def view_random_picture_mobile(request):
 
 
 def subscription_picture(profile):
-    meme = Meme.objects.filter(club__profile=profile).exclude(profile=profile).order_by("?").first()
+    meme = Meme.objects.filter(club__sub_profile=profile).exclude(seen_profile=profile).order_by("?").first()
     profile.seen_memes.add(meme)
     return meme
 
