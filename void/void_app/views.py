@@ -30,14 +30,14 @@ def share_picture(request, club_id, source_name):
 
 def subscription_picture_app(request):
     profile = log_in_user(request)
-    meme = subscription_picture(profile)
-    answer = {
-        "picture_url": f"{config['image_server_url']}{meme.picture_url}",
-        "like_number": meme.likes,
-        "picture_id": meme.id,
-        "like_url": f"{config['main_server_url']}/like_picture/{meme.id}",
-    }
     if does_exist_unseen_subscription_picture(profile):
+        meme = subscription_picture(profile)
+        answer = {
+            "picture_url": f"{config['image_server_url']}{meme.picture_url}",
+            "like_number": meme.likes,
+            "picture_id": meme.id,
+            "like_url": f"{config['main_server_url']}/like_picture/{meme.id}",
+        }
         return construct_app_response("ok", answer)
     else:
         return construct_app_response("all sub pic seen", None)
