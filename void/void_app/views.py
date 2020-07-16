@@ -14,6 +14,14 @@ secrets = Secrets()
 config = Config()
 
 
+def construct_app_response(status, content):
+    response = {
+        "status": status,
+        "content": content,
+    }
+    return JsonResponse(response)
+
+
 def share_picture(request, club_id, source_name):
     context = {"image_url": f"{config['image_server_url']}/{club_id}/{source_name}"}
     template = loader.get_template("void_app/share.html")
@@ -29,7 +37,10 @@ def subscription_picture_app(request):
         "picture_id": meme.id,
         "like_url": f"{config['main_server_url']}/like_picture/{meme.id}",
     }
-    return JsonResponse(answer)
+    if does_exist_unseen_subscription_picture(profile):
+        return construct_app_response("ok", answer)
+    else:
+        return construct_app_response("all sub pic seen", None)
 
 
 def random_picture_app(request):
@@ -41,7 +52,7 @@ def random_picture_app(request):
         "picture_id": meme.id,
         "like_url": f"{config['main_server_url']}/like_picture/{meme.id}",
     }
-    return JsonResponse(answer)
+    return construct_app_response("ok", answer)
 
 
 def view_random_picture_url(request):
@@ -84,6 +95,13 @@ def view_random_picture_mobile(request):
         'picture_server_url': config["image_server_url"]
     }
     return HttpResponse(template.render(context))
+
+
+def does_exist_unseen_subscription_picture(profile):
+    if Meme.objects.filter(club__sub_profile=profile).exclude(seen_profile=profile).order_by("?"):
+        return True
+    else:
+        return False
 
 
 def subscription_picture(profile):
