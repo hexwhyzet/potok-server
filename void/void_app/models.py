@@ -6,7 +6,6 @@ from .functions import id_gen
 class MemeManager(models.Manager):
     def create_meme(self, meme_data, pic_path, club):
         meme = self.create()
-        # meme.id = id_gen(length=6)
         meme.source_name = "vk"
         meme.source_id = str(meme_data['post_id'])
         meme.picture_url = pic_path
@@ -18,10 +17,12 @@ class MemeManager(models.Manager):
 
 class Club(models.Model):
     id = models.CharField(max_length=100, primary_key=True, unique=True)
+    profile_picture_url = models.CharField(max_length=100, default="")
+    name = models.CharField(max_length=100, default="")
+    screen_name = models.CharField(max_length=100, default="")
 
 
 class Meme(models.Model):
-    # id = models.CharField(max_length=6, primary_key=True, default=id_gen)
     source_name = models.CharField(max_length=100)
     picture_url = models.CharField(max_length=100, default="")
     size = models.PositiveIntegerField(default=0)
