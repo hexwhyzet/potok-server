@@ -6,7 +6,7 @@ from random import randint
 from django.shortcuts import redirect
 from .models import Meme, Profile
 from django.contrib.auth.models import User
-from .picture_saver import meme_json_parser
+from .picture_saver import meme_json_parser, club_json_parser
 
 from .config import Secrets, Config
 
@@ -37,6 +37,13 @@ def subscription_picture_app(request):
             "like_number": meme.likes,
             "picture_id": meme.id,
             "like_url": f"{config['main_server_url']}/like_picture/{meme.id}",
+            "profile": {
+                "name": meme.club.name,
+                "screen_name": meme.club.screen_name,
+                "profile_picture_url": f"{config['image_server_url']}{meme.club.profile_picture_url}",
+                "is_subscribed": profile.subscriptions.filter(id=meme.club.id).exists(),
+                "subscribe_url": f"{config['main_server_url']}/subscribe/{meme.club.id}"
+            }
         }
         return construct_app_response("ok", answer)
     else:
@@ -51,6 +58,13 @@ def random_picture_app(request):
         "like_number": meme.likes,
         "picture_id": meme.id,
         "like_url": f"{config['main_server_url']}/like_picture/{meme.id}",
+        "profile": {
+            "name": meme.club.name,
+            "screen_name": meme.club.screen_name,
+            "profile_picture_url": f"{config['image_server_url']}{meme.club.profile_picture_url}",
+            "is_subscribed": profile.subscriptions.filter(id=meme.club.id).exists(),
+            "subscribe_url": f"{config['main_server_url']}/subscribe/{meme.club.id}"
+        }
     }
     return construct_app_response("ok", answer)
 
@@ -132,10 +146,22 @@ def switch_like(request, meme_id):
     return JsonResponse({'status': 'ok'})
 
 
+def subscribe(request, club_id):
+    profile = log_in_user(request)
+    profile.subscriptions.add(club_id)
+    return JsonResponse({'status': 'ok'})
+
 @csrf_exempt
 def update_memes_db(request):
     post_json = request.POST["archive"]
     meme_json_parser(post_json)
+    return JsonResponse({'status': 'ok'})
+
+
+@csrf_exempt
+def update_club_db(request):
+    post_json = request.POST["archive"]
+    club_json_parser(post_json)
     return JsonResponse({'status': 'ok'})
 
 
