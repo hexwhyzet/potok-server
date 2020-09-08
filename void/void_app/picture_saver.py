@@ -19,7 +19,7 @@ def meme_json_parser(memes_data):
         source_id = abs(meme_data['source_id'])
         club, _ = Club.objects.get_or_create(id=source_id)
 
-        if not Meme.objects.filter(club=club, id=pic_name).exists():
+        if not Meme.objects.filter(picture_url=f"/{source_id}/{pic_name}").exists():
             pic_path = "/" + download_picture_to_bucket(picture_url, pic_name, source_id)
             Meme.objects.create_meme(meme_data, pic_path, club).save()
 

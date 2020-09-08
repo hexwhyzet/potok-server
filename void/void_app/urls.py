@@ -19,13 +19,14 @@ from . import views
 
 urlpatterns = [
     path("share/<str:club_id>/<str:source_name>", views.share_picture),
-    path("app/subscription_picture", views.subscription_picture_app),
-    path("app/random_picture", views.random_picture_app),
-    path("web/subscription_picture", views.view_subscription_picture),
-    path("web/random_picture", views.view_random_picture),
-    path("mweb/random_picture", views.view_random_picture_mobile),
+    path("app/subscription_picture/<str:session_token>", views.subscription_picture_app),
+    path("app/random_picture/<str:session_token>", views.random_picture_app),
+    # path("web/subscription_picture", views.view_subscription_picture),
+    # path("web/random_picture", views.view_random_picture),
+    # path("mweb/random_picture", views.view_random_picture_mobile),
     path("like_picture/<int:meme_id>", views.switch_like),
     path("subscribe/<int:club_id>", views.subscribe),
     path("send_posts", views.update_memes_db),
-    path("send_clubs", views.update_club_db)
+    path("send_clubs", views.update_club_db),
+    path("create_session", views.create_session_request),
 ]

@@ -4,9 +4,10 @@ from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
 from random import randint
 from django.shortcuts import redirect
-from .models import Meme, Profile
+from .models import Meme, Profile, Session
 from django.contrib.auth.models import User
 from .picture_saver import meme_json_parser, club_json_parser
+from .functions import id_gen
 
 from .config import Secrets, Config
 
@@ -28,32 +29,43 @@ def share_picture(request, club_id, source_name):
     return HttpResponse(template.render(context))
 
 
-def subscription_picture_app(request):
+def create_session(profile):
+    for session in Session.objects.filter(profile=profile, is_opened=True):
+        session.is_opened = False
+        session.save()
+    session = Session.objects.create(profile=profile, is_opened=True, token=id_gen(20))
+    return session
+
+
+def create_session_request(request):
+    profile = log_in_user(request)
+    session = create_session(profile)
+    answer = {
+        "token": session.token,
+    }
+    return construct_app_response("ok", answer)
+
+
+def subscription_picture_app(request, session_token):
     profile = log_in_user(request)
     if does_exist_unseen_subscription_picture(profile):
-        meme = subscription_picture(profile)
-        answer = {
-            "picture_url": f"{config['image_server_url']}{meme.picture_url}",
-            "like_number": meme.likes,
-            "picture_id": meme.id,
-            "like_url": f"{config['main_server_url']}/like_picture/{meme.id}",
-            "date": meme.date,
-            "profile": {
-                "name": meme.club.name,
-                "screen_name": meme.club.screen_name,
-                "profile_picture_url": f"{config['image_server_url']}{meme.club.profile_picture_url}",
-                "is_subscribed": profile.subscriptions.filter(id=meme.club.id).exists(),
-                "subscribe_url": f"{config['main_server_url']}/subscribe/{meme.club.id}"
-            }
-        }
-        return construct_app_response("ok", answer)
+        session = Session.objects.get(token=session_token)
+        meme = subscription_picture(profile, session)
+        response_content = construct_picture_response(profile, meme)
+        return construct_app_response("ok", response_content)
     else:
         return construct_app_response("all sub pic seen", None)
 
 
-def random_picture_app(request):
+def random_picture_app(request, session_token):
     profile = log_in_user(request)
-    meme = random_picture(profile)
+    session = Session.objects.get(token=session_token)
+    meme = random_picture(profile, session)
+    response_content = construct_picture_response(profile, meme)
+    return construct_app_response("ok", response_content)
+
+
+def construct_picture_response(profile, meme):
     answer = {
         "picture_url": f"{config['image_server_url']}{meme.picture_url}",
         "like_number": meme.likes,
@@ -68,49 +80,49 @@ def random_picture_app(request):
             "subscribe_url": f"{config['main_server_url']}/subscribe/{meme.club.id}"
         }
     }
-    return construct_app_response("ok", answer)
+    return answer
 
 
-def view_random_picture_url(request):
-    profile = log_in_user(request)
-    meme = random_picture(profile)
-    return redirect(f"{config['image_server_url']}{meme.picture_url}")
+# def view_random_picture_url(request):
+#     profile = log_in_user(request)
+#     meme = random_picture(profile)
+#     return redirect(f"{config['image_server_url']}{meme.picture_url}")
+#
+#
+# def view_random_picture(request):
+#     profile = log_in_user(request)
+#     meme = random_picture(profile)
+#     template = loader.get_template('void_app/feed.html')
+#     context = {
+#         'meme': meme,
+#         'main_server_url': config["main_server_url"],
+#         'picture_server_url': config["image_server_url"]
+#     }
+#     return HttpResponse(template.render(context))
 
 
-def view_random_picture(request):
-    profile = log_in_user(request)
-    meme = random_picture(profile)
-    template = loader.get_template('void_app/feed.html')
-    context = {
-        'meme': meme,
-        'main_server_url': config["main_server_url"],
-        'picture_server_url': config["image_server_url"]
-    }
-    return HttpResponse(template.render(context))
-
-
-def view_subscription_picture(request):
-    profile = log_in_user(request)
-    meme = subscription_picture(profile)
-    template = loader.get_template('void_app/feed.html')
-    context = {
-        'meme': meme,
-        'main_server_url': config["main_server_url"],
-        'picture_server_url': config["image_server_url"]
-    }
-    return HttpResponse(template.render(context))
-
-
-def view_random_picture_mobile(request):
-    profile = log_in_user(request)
-    meme = random_picture(profile)
-    template = loader.get_template('void_app/feed_mobile.html')
-    context = {
-        'meme': meme,
-        'main_server_url': config["main_server_url"],
-        'picture_server_url': config["image_server_url"]
-    }
-    return HttpResponse(template.render(context))
+# def view_subscription_picture(request):
+#     profile = log_in_user(request)
+#     meme = subscription_picture(profile)
+#     template = loader.get_template('void_app/feed.html')
+#     context = {
+#         'meme': meme,
+#         'main_server_url': config["main_server_url"],
+#         'picture_server_url': config["image_server_url"]
+#     }
+#     return HttpResponse(template.render(context))
+#
+#
+# def view_random_picture_mobile(request):
+#     profile = log_in_user(request)
+#     meme = random_picture(profile)
+#     template = loader.get_template('void_app/feed_mobile.html')
+#     context = {
+#         'meme': meme,
+#         'main_server_url': config["main_server_url"],
+#         'picture_server_url': config["image_server_url"]
+#     }
+#     return HttpResponse(template.render(context))
 
 
 def does_exist_unseen_subscription_picture(profile):
@@ -120,15 +132,20 @@ def does_exist_unseen_subscription_picture(profile):
         return False
 
 
-def subscription_picture(profile):
-    meme = Meme.objects.filter(club__sub_profile=profile).exclude(seen_profile=profile).latest("date")
+def subscription_picture(profile, session):
+    meme = Meme.objects.filter(club__sub_profile=profile).exclude(seen_profile=profile).exclude(
+        id__in=[m.id for m in session.random_memes.all() | session.random_memes.all()]).latest("date")
     profile.seen_memes.add(meme)
+    session.subscription_memes.add(meme)
+    print(meme.id, meme.picture_url)
     return meme
 
 
-def random_picture(profile):
-    meme = Meme.objects.exclude(seen_profile=profile).order_by("?").first()
+def random_picture(profile, session):
+    meme = Meme.objects.exclude(seen_profile=profile).exclude(
+        id__in=[m.id for m in session.random_memes.all() | session.subscription_memes.all()]).latest("date")
     profile.seen_memes.add(meme)
+    session.random_memes.add(meme)
     return meme
 
 

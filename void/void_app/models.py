@@ -52,3 +52,12 @@ class Profile(models.Model):
 
     def add_ip(self, ip):
         self.ip = ip
+
+
+class Session(models.Model):
+    is_opened = models.BooleanField()
+    token = models.CharField(max_length=100)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    subscription_memes = models.ManyToManyField(Meme, related_name='sessions_subscription', blank=True)
+    random_memes = models.ManyToManyField(Meme, related_name='sessions_random', blank=True)
+
