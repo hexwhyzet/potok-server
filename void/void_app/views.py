@@ -37,6 +37,7 @@ def subscription_picture_app(request):
             "like_number": meme.likes,
             "picture_id": meme.id,
             "like_url": f"{config['main_server_url']}/like_picture/{meme.id}",
+            "date": meme.date,
             "profile": {
                 "name": meme.club.name,
                 "screen_name": meme.club.screen_name,
@@ -58,6 +59,7 @@ def random_picture_app(request):
         "like_number": meme.likes,
         "picture_id": meme.id,
         "like_url": f"{config['main_server_url']}/like_picture/{meme.id}",
+        "date": meme.date,
         "profile": {
             "name": meme.club.name,
             "screen_name": meme.club.screen_name,
@@ -119,7 +121,7 @@ def does_exist_unseen_subscription_picture(profile):
 
 
 def subscription_picture(profile):
-    meme = Meme.objects.filter(club__sub_profile=profile).exclude(seen_profile=profile).order_by("?").first()
+    meme = Meme.objects.filter(club__sub_profile=profile).exclude(seen_profile=profile).latest("date")
     profile.seen_memes.add(meme)
     return meme
 
@@ -150,6 +152,7 @@ def subscribe(request, club_id):
     profile = log_in_user(request)
     profile.subscriptions.add(club_id)
     return JsonResponse({'status': 'ok'})
+
 
 @csrf_exempt
 def update_memes_db(request):
