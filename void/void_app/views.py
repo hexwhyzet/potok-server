@@ -134,10 +134,11 @@ def does_exist_unseen_subscription_picture(profile):
 
 def subscription_picture(profile, session):
     meme = Meme.objects.filter(club__sub_profile=profile).exclude(seen_profile=profile).exclude(
-        id__in=[m.id for m in session.random_memes.all() | session.random_memes.all()]).latest("date")
+        id__in=[m.id for m in session.random_memes.all() | session.subscription_memes.all()]).latest("date")
     profile.seen_memes.add(meme)
     session.subscription_memes.add(meme)
-    print(meme.id, meme.picture_url)
+    profile.save()
+    session.save()
     return meme
 
 
@@ -146,6 +147,8 @@ def random_picture(profile, session):
         id__in=[m.id for m in session.random_memes.all() | session.subscription_memes.all()]).latest("date")
     profile.seen_memes.add(meme)
     session.random_memes.add(meme)
+    profile.save()
+    session.save()
     return meme
 
 
