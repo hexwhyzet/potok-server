@@ -24,6 +24,7 @@ urlpatterns = [
     # path("web/subscription_picture", views.view_subscription_picture),
     # path("web/random_picture", views.view_random_picture),
     # path("mweb/random_picture", views.view_random_picture_mobile),
+    path("profile_pictures/<int:profile_id>/<int:number>/<int:offset>", views.profile_pictures),
     path("like_picture/<int:pic_id>", views.switch_like),
     path("subscribe/<int:club_id>", views.subscribe),
     path("send_posts", views.update_pics_db),

@@ -90,6 +90,19 @@ def construct_picture_response(profile: Profile, pic: Picture):
     return answer
 
 
+def profile_pictures(request, profile_id, number=10, offset=0):
+    profile = log_in_user(request)
+    pics_num = Picture.objects.filter(profile__id=profile_id).count()
+    if pics_num <= offset:
+        return construct_app_response("no more pictures", None)
+    elif pics_num >= number + offset:
+        pics = Picture.objects.filter(profile__id=profile_id)[offset:offset + number]
+    else:
+        pics = Picture.objects.filter(profile__id=profile_id)[offset:]
+    answer = list(map(lambda pic: construct_picture_response(profile, pic), pics))
+    return construct_app_response("ok", answer)
+
+
 # def view_random_picture_url(request):
 #     profile = log_in_user(request)
 #     meme = random_picture(profile)
