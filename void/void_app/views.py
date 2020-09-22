@@ -1,15 +1,14 @@
-from django.http import HttpResponse
-from django.http import JsonResponse
-from django.template import loader
-from django.views.decorators.csrf import csrf_exempt
 from random import randint
-from django.shortcuts import redirect
-from .models import Meme, Profile, Session
+
 from django.contrib.auth.models import User
-from .picture_saver import meme_json_parser, club_json_parser
-from .functions import id_gen
+from django.db.models import F, Sum
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 from .config import Secrets, Config
+from .functions import id_gen
+from .importer import pics_json_parser, profiles_json_parser
+from .models import Picture, Profile, Session
 
 secrets = Secrets()
 config = Config()
@@ -23,10 +22,10 @@ def construct_app_response(status, content):
     return JsonResponse(response)
 
 
-def share_picture(request, club_id, source_name):
-    context = {"image_url": f"{config['image_server_url']}/{club_id}/{source_name}"}
-    template = loader.get_template("void_app/share.html")
-    return HttpResponse(template.render(context))
+# def share_picture(request, club_id, source_name):
+#     context = {"image_url": f"{config['image_server_url']}/{club_id}/{source_name}"}
+#     template = loader.get_template("void_app/share.html")
+#     return HttpResponse(template.render(context))
 
 
 def create_session(profile):
@@ -46,38 +45,45 @@ def create_session_request(request):
     return construct_app_response("ok", answer)
 
 
-def subscription_picture_app(request, session_token):
+def app_subscription_picture(request, session_token):
     profile = log_in_user(request)
     if does_exist_unseen_subscription_picture(profile):
         session = Session.objects.get(token=session_token)
-        meme = subscription_picture(profile, session)
-        response_content = construct_picture_response(profile, meme)
+        picture = subscription_picture(profile, session)
+        response_content = construct_picture_response(profile, picture)
         return construct_app_response("ok", response_content)
     else:
         return construct_app_response("all sub pic seen", None)
 
 
-def random_picture_app(request, session_token):
+def app_feed_picture(request, session_token):
     profile = log_in_user(request)
     session = Session.objects.get(token=session_token)
-    meme = random_picture(profile, session)
-    response_content = construct_picture_response(profile, meme)
+    picture = feed_picture(profile, session)
+    response_content = construct_picture_response(profile, picture)
     return construct_app_response("ok", response_content)
 
 
-def construct_picture_response(profile, meme):
+def construct_picture_response(profile: Profile, pic: Picture):
     answer = {
-        "picture_url": f"{config['image_server_url']}{meme.picture_url}",
-        "like_number": meme.likes,
-        "picture_id": meme.id,
-        "like_url": f"{config['main_server_url']}/like_picture/{meme.id}",
-        "date": meme.date,
+        "id": pic.id,
+        "url": f"{config['image_server_url']}{pic.url}",
+        "res": pic.res,
+        "date": pic.date,
+        "views_num": pic.views_num,
+        "likes_num": pic.likes_num,
+        "shares_num": pic.shares_num,
+        "like_url": f"{config['main_server_url']}/like_picture/{pic.id}",
         "profile": {
-            "name": meme.club.name,
-            "screen_name": meme.club.screen_name,
-            "profile_picture_url": f"{config['image_server_url']}{meme.club.profile_picture_url}",
-            "is_subscribed": profile.subscriptions.filter(id=meme.club.id).exists(),
-            "subscribe_url": f"{config['main_server_url']}/subscribe/{meme.club.id}"
+            "id": pic.profile.id,
+            "name": pic.profile.name,
+            "screen_name": pic.profile.screen_name,
+            "subs_num": pic.profile.subs.count(),
+            "followers_num": pic.profile.followers.count(),
+            "views_num": pic.profile.pics.aggregate(Sum('views_num'))['views_num__sum'],
+            "avatar_url": f"{config['image_server_url']}{pic.profile.avatar_url}",
+            "is_subscribed": profile.subs.filter(id=pic.profile.id).exists(),
+            "subscribe_url": f"{config['main_server_url']}/subscribe/{pic.profile.id}"
         }
     }
     return answer
@@ -125,66 +131,67 @@ def construct_picture_response(profile, meme):
 #     return HttpResponse(template.render(context))
 
 
-def does_exist_unseen_subscription_picture(profile):
-    if Meme.objects.filter(club__sub_profile=profile).exclude(seen_profile=profile).order_by("?"):
+def does_exist_unseen_subscription_picture(profile: Profile):
+    if Picture.objects.filter(profile__followers=profile).exclude(profiles_viewed=profile).exists():
         return True
     else:
         return False
 
 
-def subscription_picture(profile, session):
-    meme = Meme.objects.filter(club__sub_profile=profile).exclude(seen_profile=profile).exclude(
-        id__in=[m.id for m in session.random_memes.all() | session.subscription_memes.all()]).latest("date")
-    profile.seen_memes.add(meme)
-    session.subscription_memes.add(meme)
+def subscription_picture(profile: Profile, session: Session):
+    picture = Picture.objects.filter(profile__followers=profile).exclude(profiles_viewed=profile).exclude(
+        id__in=[m.id for m in session.feed_pics.all() | session.sub_pics.all()]).latest("date")
+    picture.views_num += 1
+    picture.save()
+    profile.pics_viewed.add(picture)
     profile.save()
+    session.sub_pics.add(picture)
     session.save()
-    return meme
+    return picture
 
 
-def random_picture(profile, session):
-    meme = Meme.objects.exclude(seen_profile=profile).exclude(
-        id__in=[m.id for m in session.random_memes.all() | session.subscription_memes.all()]).latest("date")
-    profile.seen_memes.add(meme)
-    session.random_memes.add(meme)
+def feed_picture(profile: Profile, session: Session):
+    picture = Picture.objects.exclude(profiles_viewed=profile).exclude(
+        id__in=[m.id for m in session.feed_pics.all() | session.sub_pics.all()]).latest("date")
+    picture.update(views_num=F('views_num') + 1)
+    picture.save()
+    profile.pics_viewed.add(picture)
     profile.save()
+    session.feed_pics.add(picture)
     session.save()
-    return meme
+    return picture
 
 
-def get_random_object_by_type(object_type):
-    return object_type.objects.order_by("?").first()
-
-
-def switch_like(request, meme_id):
-    profile = log_in_user(request)
-    meme = Meme.objects.filter(id=meme_id).first()
-    if not profile.liked_memes.filter(id=meme_id).exists():
-        meme.add_like()
-        profile.liked_memes.add(meme)
+def switch_like(request, pic_id):
+    user_profile = log_in_user(request)
+    picture = Picture.objects.filter(id=pic_id).first()
+    if not user_profile.pics_liked.filter(id=pic_id).exists():
+        user_profile.pics_liked.add(picture)
+        picture.likes_num += 1
     else:
-        meme.remove_like()
-        profile.liked_memes.remove(meme)
+        user_profile.pics_liked.remove(picture)
+        picture.likes_num -= 1
+    picture.save()
     return JsonResponse({'status': 'ok'})
 
 
 def subscribe(request, club_id):
     profile = log_in_user(request)
-    profile.subscriptions.add(club_id)
+    profile.subs.add(club_id)
     return JsonResponse({'status': 'ok'})
 
 
 @csrf_exempt
-def update_memes_db(request):
+def update_pics_db(request):
     post_json = request.POST["archive"]
-    meme_json_parser(post_json)
+    pics_json_parser(post_json)
     return JsonResponse({'status': 'ok'})
 
 
 @csrf_exempt
-def update_club_db(request):
+def update_profiles_db(request):
     post_json = request.POST["archive"]
-    club_json_parser(post_json)
+    profiles_json_parser(post_json)
     return JsonResponse({'status': 'ok'})
 
 
@@ -198,13 +205,13 @@ def get_user_ip(request):
     return ip
 
 
-def log_in_user(request):
+def log_in_user(request) -> Profile:
     ip = get_user_ip(request)
     if not Profile.objects.filter(ip=ip).first():
         new_user = User.objects.create_user(str(randint(1, 100000000000)))
         new_user.save()
         profile = Profile()
-        profile.add_ip(ip)
+        profile.ip = ip
         profile.user = new_user
         profile.save()
     return Profile.objects.filter(ip=ip).first()

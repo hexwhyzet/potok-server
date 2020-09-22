@@ -13,20 +13,21 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import path, include
+from django.urls import path
 
 from . import views
 
 urlpatterns = [
-    path("share/<str:club_id>/<str:source_name>", views.share_picture),
-    path("app/subscription_picture/<str:session_token>", views.subscription_picture_app),
-    path("app/random_picture/<str:session_token>", views.random_picture_app),
+    # path("share/<str:club_id>/<str:source_name>", views.share_picture),
+    path("app/subscription_picture/<str:session_token>", views.app_subscription_picture),
+    path("app/feed_picture/<str:session_token>", views.app_feed_picture),
     # path("web/subscription_picture", views.view_subscription_picture),
     # path("web/random_picture", views.view_random_picture),
     # path("mweb/random_picture", views.view_random_picture_mobile),
-    path("like_picture/<int:meme_id>", views.switch_like),
+    path("like_picture/<int:pic_id>", views.switch_like),
     path("subscribe/<int:club_id>", views.subscribe),
-    path("send_posts", views.update_memes_db),
-    path("send_clubs", views.update_club_db),
+    path("send_posts", views.update_pics_db),
+    path("send_clubs", views.update_profiles_db),
     path("create_session", views.create_session_request),
+    # path("search/<str:search_string>", views.)
 ]
