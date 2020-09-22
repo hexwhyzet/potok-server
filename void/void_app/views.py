@@ -81,6 +81,7 @@ def construct_picture_response(profile: Profile, pic: Picture):
             "subs_num": pic.profile.subs.count(),
             "followers_num": pic.profile.followers.count(),
             "views_num": pic.profile.pics.aggregate(Sum('views_num'))['views_num__sum'],
+            "likes_num": pic.profile.pics.aggregate(Sum('likes_num'))['likes_num__sum'],
             "avatar_url": f"{config['image_server_url']}{pic.profile.avatar_url}",
             "is_subscribed": profile.subs.filter(id=pic.profile.id).exists(),
             "subscribe_url": f"{config['main_server_url']}/subscribe/{pic.profile.id}"
@@ -153,7 +154,7 @@ def subscription_picture(profile: Profile, session: Session):
 def feed_picture(profile: Profile, session: Session):
     picture = Picture.objects.exclude(profiles_viewed=profile).exclude(
         id__in=[m.id for m in session.feed_pics.all() | session.sub_pics.all()]).latest("date")
-    picture.update(views_num=F('views_num') + 1)
+    picture.views_num += 1
     picture.save()
     profile.pics_viewed.add(picture)
     profile.save()
