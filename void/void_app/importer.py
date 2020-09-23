@@ -23,7 +23,7 @@ def pics_json_parser(json_pics_data):
         pic_profile, _ = Profile.objects.get_or_create(
             minor_id=pic_profile_minor_id,
             defaults={"user": User.objects.create_user(str(randint(1, 100000000000)))})
-        if not Picture.objects.filter(minor_id=pic_minor_id, profile__minor_id=pic_profile).exists():
+        if not Picture.objects.filter(minor_id=pic_minor_id, profile=pic_profile).exists():
             pic = Picture.create(profile=pic_profile,
                                  source_url=source_url,
                                  minor_id=pic_minor_id,
