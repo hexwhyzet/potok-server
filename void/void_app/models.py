@@ -6,7 +6,7 @@ from django.db import models
 
 class Profile(models.Model):
     id = models.AutoField(primary_key=True)
-    minor_id = models.CharField(max_length=100, unique=True, blank=True)
+    minor_id = models.CharField(null=True, default=None, max_length=100, unique=True, blank=True)
     ip = models.CharField(max_length=100)
     name = models.CharField(max_length=100, default="", blank=True)
     screen_name = models.CharField(null=True, default=None, max_length=100, unique=True, blank=True)
