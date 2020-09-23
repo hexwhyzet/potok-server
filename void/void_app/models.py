@@ -9,7 +9,7 @@ class Profile(models.Model):
     minor_id = models.CharField(max_length=100, unique=True, blank=True)
     ip = models.CharField(max_length=100)
     name = models.CharField(max_length=100, default="", blank=True)
-    screen_name = models.CharField(null=True, max_length=100, unique=True, blank=True)
+    screen_name = models.CharField(null=True, default=None, max_length=100, unique=True, blank=True)
     avatar_url = models.CharField(max_length=100, default="", blank=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.CASCADE)
     subs = models.ManyToManyField("self", symmetrical=False, related_name='followers', blank=True)
