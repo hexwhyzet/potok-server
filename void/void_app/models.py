@@ -7,7 +7,7 @@ from django.db import models
 class Profile(models.Model):
     id = models.AutoField(primary_key=True)
     minor_id = models.CharField(null=True, default=None, max_length=100, unique=True, blank=True)
-    ip = models.CharField(max_length=100)
+    ip = models.CharField(max_length=100, blank=True)
     name = models.CharField(max_length=100, default=None, blank=True)
     screen_name = models.CharField(null=True, default=None, max_length=100, unique=True, blank=True)
     avatar_url = models.CharField(max_length=100, default=None, blank=True)
@@ -21,7 +21,7 @@ class Picture(models.Model):
     url = models.CharField(max_length=100, default=None, null=True, blank=True)
     source_url = models.CharField(max_length=100, blank=True)
     res = models.PositiveSmallIntegerField(default=0, blank=True)
-    date = models.DateTimeField()
+    date = models.DateTimeField(blank=True)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='pics', blank=True, null=True)
     profiles_liked = models.ManyToManyField(Profile, related_name='pics_liked', blank=True)
     profiles_viewed = models.ManyToManyField(Profile, related_name='pics_viewed', blank=True)
