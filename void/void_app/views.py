@@ -2,6 +2,7 @@ from random import randint
 
 from django.contrib.auth.models import User
 from django.db.models import F, Sum
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -92,8 +93,8 @@ def construct_profile_response(user_profile: Profile, profile: Profile):
         "screen_name": profile.screen_name,
         "subs_num": profile.subs.count(),
         "followers_num": profile.followers.count(),
-        "views_num": profile.pics.aggregate(Sum('views_num'))['views_num__sum'],
-        "likes_num": profile.pics.aggregate(Sum('likes_num'))['likes_num__sum'],
+        "views_num": profile.pics.aggregate(views_num=Coalesce(Sum('views_num'), 0))['views_num'],
+        "likes_num": profile.pics.aggregate(likes_num=Coalesce(Sum('likes_num'), 0))['likes_num'],
         "avatar_url": f"{config['image_server_url']}{profile.avatar_url}",
         "is_subscribed": user_profile.subs.filter(id=profile.id).exists(),
         "subscribe_url": f"{config['main_server_url']}/subscribe/{profile.id}",

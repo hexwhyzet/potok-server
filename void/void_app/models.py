@@ -8,9 +8,9 @@ class Profile(models.Model):
     id = models.AutoField(primary_key=True)
     minor_id = models.CharField(null=True, default=None, max_length=100, unique=True, blank=True)
     ip = models.CharField(max_length=100)
-    name = models.CharField(max_length=100, default="", blank=True)
+    name = models.CharField(max_length=100, default=None, blank=True)
     screen_name = models.CharField(null=True, default=None, max_length=100, unique=True, blank=True)
-    avatar_url = models.CharField(max_length=100, default="", blank=True)
+    avatar_url = models.CharField(max_length=100, default=None, blank=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.CASCADE)
     subs = models.ManyToManyField("self", symmetrical=False, related_name='followers', blank=True)
 
