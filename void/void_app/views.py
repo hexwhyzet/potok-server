@@ -64,7 +64,13 @@ def app_feed_picture(request, session_token):
     return construct_app_response("ok", response_content)
 
 
-def construct_picture_response(profile: Profile, pic: Picture):
+def app_my_profile(request):
+    profile = log_in_user(request)
+    response_content = construct_profile_response(profile, profile)
+    return construct_app_response("ok", response_content)
+
+
+def construct_picture_response(user_profile: Profile, pic: Picture):
     answer = {
         "id": pic.id,
         "url": f"{config['image_server_url']}{pic.url}",
@@ -74,18 +80,24 @@ def construct_picture_response(profile: Profile, pic: Picture):
         "likes_num": pic.likes_num,
         "shares_num": pic.shares_num,
         "like_url": f"{config['main_server_url']}/like_picture/{pic.id}",
-        "profile": {
-            "id": pic.profile.id,
-            "name": pic.profile.name,
-            "screen_name": pic.profile.screen_name,
-            "subs_num": pic.profile.subs.count(),
-            "followers_num": pic.profile.followers.count(),
-            "views_num": pic.profile.pics.aggregate(Sum('views_num'))['views_num__sum'],
-            "likes_num": pic.profile.pics.aggregate(Sum('likes_num'))['likes_num__sum'],
-            "avatar_url": f"{config['image_server_url']}{pic.profile.avatar_url}",
-            "is_subscribed": profile.subs.filter(id=pic.profile.id).exists(),
-            "subscribe_url": f"{config['main_server_url']}/subscribe/{pic.profile.id}"
-        }
+        "profile": construct_profile_response(user_profile, pic.profile)
+    }
+    return answer
+
+
+def construct_profile_response(user_profile: Profile, profile: Profile):
+    answer = {
+        "id": profile.id,
+        "name": profile.name,
+        "screen_name": profile.screen_name,
+        "subs_num": profile.subs.count(),
+        "followers_num": profile.followers.count(),
+        "views_num": profile.pics.aggregate(Sum('views_num'))['views_num__sum'],
+        "likes_num": profile.pics.aggregate(Sum('likes_num'))['likes_num__sum'],
+        "avatar_url": f"{config['image_server_url']}{profile.avatar_url}",
+        "is_subscribed": user_profile.subs.filter(id=profile.id).exists(),
+        "subscribe_url": f"{config['main_server_url']}/subscribe/{profile.id}",
+        "is_yours": profile == user_profile,
     }
     return answer
 

@@ -19,6 +19,7 @@ from . import views
 
 urlpatterns = [
     # path("share/<str:club_id>/<str:source_name>", views.share_picture),
+    path("app/my_profile", views.app_my_profile),
     path("app/subscription_picture/<str:session_token>", views.app_subscription_picture),
     path("app/feed_picture/<str:session_token>", views.app_feed_picture),
     # path("web/subscription_picture", views.view_subscription_picture),
