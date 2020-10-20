@@ -89,8 +89,8 @@ def construct_picture_response(user_profile: Profile, pic: Picture):
 def construct_profile_response(user_profile: Profile, profile: Profile):
     answer = {
         "id": profile.id,
-        "name": profile.name,
-        "screen_name": profile.screen_name,
+        "name": profile.name or "unknown",
+        "screen_name": profile.screen_name or "unknown",
         "subs_num": profile.subs.count(),
         "followers_num": profile.followers.count(),
         "views_num": profile.pics.aggregate(views_num=Coalesce(Sum('views_num'), 0))['views_num'],
@@ -100,6 +100,7 @@ def construct_profile_response(user_profile: Profile, profile: Profile):
         "subscribe_url": f"{config['main_server_url']}/subscribe/{profile.id}",
         "is_yours": profile == user_profile,
     }
+    print(answer)
     return answer
 
 
