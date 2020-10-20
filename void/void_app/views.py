@@ -100,7 +100,6 @@ def construct_profile_response(user_profile: Profile, profile: Profile):
         "subscribe_url": f"{config['main_server_url']}/subscribe/{profile.id}",
         "is_yours": profile == user_profile,
     }
-    print(answer)
     return answer
 
 
@@ -108,7 +107,7 @@ def profile_pictures(request, profile_id, number=10, offset=0):
     profile = log_in_user(request)
     pics_num = Picture.objects.filter(profile__id=profile_id).count()
     if pics_num <= offset:
-        return construct_app_response("no more pictures", None)
+        return construct_app_response("no more pictures", [])
     elif pics_num >= number + offset:
         pics = Picture.objects.filter(profile__id=profile_id)[offset:offset + number]
     else:
