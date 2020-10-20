@@ -109,9 +109,9 @@ def profile_pictures(request, profile_id, number=10, offset=0):
     if pics_num <= offset:
         return construct_app_response("no more pictures", [])
     elif pics_num >= number + offset:
-        pics = Picture.objects.filter(profile__id=profile_id)[offset:offset + number]
+        pics = Picture.objects.filter(profile__id=profile_id).order_by('-date')[offset:offset + number]
     else:
-        pics = Picture.objects.filter(profile__id=profile_id)[offset:]
+        pics = Picture.objects.filter(profile__id=profile_id).order_by('-date')[offset:]
     answer = list(map(lambda pic: construct_picture_response(profile, pic), pics))
     return construct_app_response("ok", answer)
 
