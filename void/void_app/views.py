@@ -46,22 +46,19 @@ def create_session_request(request):
     return construct_app_response("ok", answer)
 
 
-def app_subscription_picture(request, session_token):
-    profile = log_in_user(request)
-    if does_exist_unseen_subscription_picture(profile):
-        session = Session.objects.get(token=session_token)
-        picture = subscription_picture(profile, session)
-        response_content = construct_picture_response(profile, picture)
-        return construct_app_response("ok", response_content)
-    else:
-        return construct_app_response("all sub pic seen", None)
-
-
-def app_feed_picture(request, session_token):
+def app_subscription_pictures(request, session_token, number):
     profile = log_in_user(request)
     session = Session.objects.get(token=session_token)
-    picture = feed_picture(profile, session)
-    response_content = construct_picture_response(profile, picture)
+    pictures = subscription_pictures(profile, session, number)
+    response_content = list(map(lambda pic: construct_picture_response(profile, pic), pictures))
+    return construct_app_response("ok", response_content)
+
+
+def app_feed_pictures(request, session_token, number):
+    profile = log_in_user(request)
+    session = Session.objects.get(token=session_token)
+    pictures = feed_pictures(profile, session, number)
+    response_content = list(map(lambda pic: construct_picture_response(profile, pic), pictures))
     return construct_app_response("ok", response_content)
 
 
@@ -106,12 +103,7 @@ def construct_profile_response(user_profile: Profile, profile: Profile):
 def profile_pictures(request, profile_id, number=10, offset=0):
     profile = log_in_user(request)
     pics_num = Picture.objects.filter(profile__id=profile_id).count()
-    if pics_num <= offset:
-        return construct_app_response("no more pictures", [])
-    elif pics_num >= number + offset:
-        pics = Picture.objects.filter(profile__id=profile_id).order_by('-date')[offset:offset + number]
-    else:
-        pics = Picture.objects.filter(profile__id=profile_id).order_by('-date')[offset:]
+    pics = Picture.objects.filter(profile__id=profile_id).order_by('-date')[offset:offset + number]
     answer = list(map(lambda pic: construct_picture_response(profile, pic), pics))
     return construct_app_response("ok", answer)
 
@@ -165,28 +157,30 @@ def does_exist_unseen_subscription_picture(profile: Profile):
         return False
 
 
-def subscription_picture(profile: Profile, session: Session):
-    picture = Picture.objects.filter(profile__followers=profile).exclude(profiles_viewed=profile).exclude(
-        id__in=[m.id for m in session.feed_pics.all() | session.sub_pics.all()]).latest("date")
-    picture.views_num += 1
-    picture.save()
-    profile.pics_viewed.add(picture)
-    profile.save()
-    session.sub_pics.add(picture)
-    session.save()
-    return picture
+def subscription_pictures(profile: Profile, session: Session, number: int):
+    pictures = Picture.objects.filter(profile__followers=profile).exclude(profiles_viewed=profile).exclude(
+        id__in=[m.id for m in session.feed_pics.all() | session.sub_pics.all()]).order_by("-date")[:number]
+    for picture in pictures:
+        picture.views_num += 1
+        picture.save()
+        profile.pics_viewed.add(picture)
+        profile.save()
+        session.sub_pics.add(picture)
+        session.save()
+    return pictures
 
 
-def feed_picture(profile: Profile, session: Session):
-    picture = Picture.objects.exclude(profiles_viewed=profile).exclude(
-        id__in=[m.id for m in session.feed_pics.all() | session.sub_pics.all()]).latest("date")
-    picture.views_num += 1
-    picture.save()
-    profile.pics_viewed.add(picture)
-    profile.save()
-    session.feed_pics.add(picture)
-    session.save()
-    return picture
+def feed_pictures(profile: Profile, session: Session, number: int):
+    pictures = Picture.objects.exclude(profiles_viewed=profile).exclude(
+        id__in=[m.id for m in session.feed_pics.all() | session.sub_pics.all()]).order_by("-date")[:number]
+    for picture in pictures:
+        picture.views_num += 1
+        picture.save()
+        profile.pics_viewed.add(picture)
+        profile.save()
+        session.feed_pics.add(picture)
+        session.save()
+    return pictures
 
 
 def switch_like(request, pic_id):
