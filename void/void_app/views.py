@@ -77,6 +77,7 @@ def construct_picture_response(user_profile: Profile, pic: Picture):
         "views_num": pic.views_num,
         "likes_num": pic.likes_num,
         "shares_num": pic.shares_num,
+        "is_liked": pic.profiles_liked.filter(id=user_profile.id).exists(),
         "like_url": f"{config['main_server_url']}/like_picture/{pic.id}",
         "profile": construct_profile_response(user_profile, pic.profile)
     }
