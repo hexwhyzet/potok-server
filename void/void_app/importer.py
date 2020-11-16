@@ -29,7 +29,7 @@ def pics_json_parser(json_pics_data):
                                  minor_id=pic_minor_id,
                                  res=pic_data['photo']['size'],
                                  date=datetime.fromtimestamp(pic_data['date'], pytz.timezone("UTC")))
-            pic_url = download_picture_to_bucket(source_url, f"{pic.profile.id}/{pic.id}.jpg")
+            pic_url = upload_picture_to_bucket(requests.get(source_url).content, f"{pic.profile.id}/{pic.id}.jpg")
             pic.url = pic_url
             pic.save()
 
@@ -41,28 +41,24 @@ def profiles_json_parser(clubs_data):
         profile, _ = Profile.objects.get_or_create(
             minor_id=minor_id,
             defaults={"user": User.objects.create_user(str(randint(1, 100000000000)))})
-        pic_path = download_picture_to_bucket(profile_data['photo_url'], f"{profile.id}/avatars/avatar.jpg")
+        pic_path = upload_picture_to_bucket(requests.get(profile_data['photo_url']).content,
+                                            f"{profile.id}/avatars/avatar.jpg")
         profile.name = profile_data['name']
         profile.screen_name = profile_data['screen_name']
         profile.avatar_url = pic_path
         profile.save()
 
 
-def download_picture_to_bucket(source_url, bucket_path):
-    response = requests.get(source_url)
-    if response.status_code == 200:
-        s3 = boto3.resource(service_name='s3', endpoint_url='https://storage.yandexcloud.net')
-        bucket = s3.Bucket('void-bucket')
-        data = response.content
-        image_path = bucket_path
-        bucket.put_object(Key=image_path, Body=data)
-        return "/" + image_path
+def pic_upload(picture_data, profile):
+    picture = Picture.create(profile=profile,
+                             date=datetime.fromtimestamp(datetime.now().timestamp(), pytz.timezone("UTC")))
+    picture_url = upload_picture_to_bucket(picture_data, f"{profile.id}/{picture.id}.jpg")
+    picture.url = picture_url
+    picture.save()
 
-# def download_picture_locally(url, pic_name, source_id):
-#     response = requests.get(url)
-#     if response.status_code == 200:
-#         Path(f"media/{source_id}").mkdir(parents=True, exist_ok=True)
-#         pic_path = f"media/{source_id}/{str(pic_name)}.png"
-#         with open(pic_path, 'wb+') as out_file:
-#             out_file.write(response.content)
-#         return pic_path
+
+def upload_picture_to_bucket(picture_data, bucket_path):
+    s3 = boto3.resource(service_name='s3', endpoint_url='https://storage.yandexcloud.net')
+    bucket = s3.Bucket('void-bucket')
+    bucket.put_object(Key=bucket_path, Body=picture_data)
+    return "/" + bucket_path

@@ -1,14 +1,15 @@
+import base64
 from random import randint
 
 from django.contrib.auth.models import User
-from django.db.models import F, Sum
+from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from .config import Secrets, Config
 from .functions import id_gen
-from .importer import pics_json_parser, profiles_json_parser
+from .importer import pics_json_parser, profiles_json_parser, pic_upload
 from .models import Picture, Profile, Session
 
 secrets = Secrets()
@@ -103,10 +104,17 @@ def construct_profile_response(user_profile: Profile, profile: Profile):
 
 def profile_pictures(request, profile_id, number=10, offset=0):
     profile = log_in_user(request)
-    pics_num = Picture.objects.filter(profile__id=profile_id).count()
     pics = Picture.objects.filter(profile__id=profile_id).order_by('-date')[offset:offset + number]
     answer = list(map(lambda pic: construct_picture_response(profile, pic), pics))
     return construct_app_response("ok", answer)
+
+
+@csrf_exempt
+def upload_picture(request):
+    profile = log_in_user(request)
+    picture_data = base64.b64decode(request.POST["picture"])
+    pic_upload(picture_data, profile)
+    return JsonResponse({'status': 'ok'})
 
 
 # def view_random_picture_url(request):
