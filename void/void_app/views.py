@@ -79,7 +79,7 @@ def construct_picture_response(user_profile: Profile, pic: Picture):
         "likes_num": pic.likes_num,
         "shares_num": pic.shares_num,
         "is_liked": pic.profiles_liked.filter(id=user_profile.id).exists(),
-        "like_url": f"{config['main_server_url']}/like_picture/{pic.id}",
+        "like_url": f"{config['main_server_url']}/app/like_picture/{pic.id}",
         "profile": construct_profile_response(user_profile, pic.profile)
     }
     return answer
@@ -96,7 +96,7 @@ def construct_profile_response(user_profile: Profile, profile: Profile):
         "likes_num": profile.pics.aggregate(likes_num=Coalesce(Sum('likes_num'), 0))['likes_num'],
         "avatar_url": f"{config['image_server_url']}{profile.avatar_url or '/defaults/avatar.jpg'}",
         "is_subscribed": user_profile.subs.filter(id=profile.id).exists(),
-        "subscribe_url": f"{config['main_server_url']}/subscribe/{profile.id}",
+        "subscribe_url": f"{config['main_server_url']}/app/subscribe/{profile.id}",
         "is_yours": profile == user_profile,
     }
     return answer
@@ -168,7 +168,7 @@ def does_exist_unseen_subscription_picture(profile: Profile):
 
 def subscription_pictures(profile: Profile, session: Session, number: int):
     pictures = Picture.objects.filter(profile__followers=profile).exclude(profiles_viewed=profile).exclude(
-        id__in=[m.id for m in session.feed_pics.all() | session.sub_pics.all()]).order_by("-date")[:number]
+        id__in=[m.id for m in session.feed_pics.all() | session.sub_pics.all() | profile.id]).order_by("-date")[:number]
     for picture in pictures:
         picture.views_num += 1
         picture.save()
@@ -181,7 +181,7 @@ def subscription_pictures(profile: Profile, session: Session, number: int):
 
 def feed_pictures(profile: Profile, session: Session, number: int):
     pictures = Picture.objects.exclude(profiles_viewed=profile).exclude(
-        id__in=[m.id for m in session.feed_pics.all() | session.sub_pics.all()]).order_by("-date")[:number]
+        id__in=[m.id for m in session.feed_pics.all() | session.sub_pics.all() | profile.id]).order_by("-date")[:number]
     for picture in pictures:
         picture.views_num += 1
         picture.save()
