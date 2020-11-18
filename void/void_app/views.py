@@ -113,7 +113,7 @@ def profile_pictures(request, profile_id, number=10, offset=0):
 def upload_picture(request):
     profile = log_in_user(request)
     picture_data = base64.b64decode(request.POST["picture"])
-    pic_upload(picture_data, profile)
+    pic_upload(picture_data, profile, request.POST["extension"])
     return JsonResponse({'status': 'ok'})
 
 

@@ -49,10 +49,10 @@ def profiles_json_parser(clubs_data):
         profile.save()
 
 
-def pic_upload(picture_data, profile):
+def pic_upload(picture_data, profile, extension):
     picture = Picture.create(profile=profile,
                              date=datetime.fromtimestamp(datetime.now().timestamp(), pytz.timezone("UTC")))
-    picture_url = upload_picture_to_bucket(picture_data, f"{profile.id}/{picture.id}.jpg")
+    picture_url = upload_picture_to_bucket(picture_data, f"{profile.id}/{picture.id}.{extension}")
     picture.url = picture_url
     picture.save()
 
