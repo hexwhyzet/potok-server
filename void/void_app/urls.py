@@ -23,7 +23,7 @@ urlpatterns = [
     path("app/feed_pictures/<str:session_token>/<int:number>", views.app_feed_pictures),
     path("app/profile_pictures/<int:profile_id>/<int:number>/<int:offset>", views.profile_pictures),
     path("app/like_picture/<int:pic_id>", views.switch_like),
-    path("app/subscribe/<int:club_id>", views.subscribe),
+    path("app/subscribe/<int:club_id>", views.switch_subscribe),
     path("app/create_session", views.create_session_request),
     path("app/upload_picture", views.upload_picture),
     # path("search/<str:search_string>", views.)

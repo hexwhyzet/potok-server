@@ -203,13 +203,18 @@ def switch_like(request, pic_id):
     else:
         user_profile.pics_liked.remove(picture)
         picture.likes_num -= 1
+    user_profile.save()
     picture.save()
     return JsonResponse({'status': 'ok'})
 
 
-def subscribe(request, club_id):
-    profile = log_in_user(request)
-    profile.subs.add(club_id)
+def switch_subscribe(request, sub_profile_id):
+    user_profile = log_in_user(request)
+    if user_profile.subs.filter(id=sub_profile_id).exists():
+        user_profile.subs.exclude(id=sub_profile_id)
+    else:
+        user_profile.subs.add(id=sub_profile_id)
+    user_profile.save()
     return JsonResponse({'status': 'ok'})
 
 
