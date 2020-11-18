@@ -117,48 +117,6 @@ def upload_picture(request):
     return JsonResponse({'status': 'ok'})
 
 
-# def view_random_picture_url(request):
-#     profile = log_in_user(request)
-#     meme = random_picture(profile)
-#     return redirect(f"{config['image_server_url']}{meme.picture_url}")
-#
-#
-# def view_random_picture(request):
-#     profile = log_in_user(request)
-#     meme = random_picture(profile)
-#     template = loader.get_template('void_app/feed.html')
-#     context = {
-#         'meme': meme,
-#         'main_server_url': config["main_server_url"],
-#         'picture_server_url': config["image_server_url"]
-#     }
-#     return HttpResponse(template.render(context))
-
-
-# def view_subscription_picture(request):
-#     profile = log_in_user(request)
-#     meme = subscription_picture(profile)
-#     template = loader.get_template('void_app/feed.html')
-#     context = {
-#         'meme': meme,
-#         'main_server_url': config["main_server_url"],
-#         'picture_server_url': config["image_server_url"]
-#     }
-#     return HttpResponse(template.render(context))
-#
-#
-# def view_random_picture_mobile(request):
-#     profile = log_in_user(request)
-#     meme = random_picture(profile)
-#     template = loader.get_template('void_app/feed_mobile.html')
-#     context = {
-#         'meme': meme,
-#         'main_server_url': config["main_server_url"],
-#         'picture_server_url': config["image_server_url"]
-#     }
-#     return HttpResponse(template.render(context))
-
-
 def does_exist_unseen_subscription_picture(profile: Profile):
     if Picture.objects.filter(profile__followers=profile).exclude(profiles_viewed=profile).exists():
         return True
