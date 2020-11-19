@@ -154,7 +154,7 @@ def feed_pictures(profile: Profile, session: Session, number: int):
 
 def switch_like(request, pic_id):
     user_profile = log_in_user(request)
-    picture = Picture.objects.filter(id=pic_id).first()
+    picture = Picture.objects.get(id=pic_id)
     if not user_profile.pics_liked.filter(id=pic_id).exists():
         user_profile.pics_liked.add(picture)
         picture.likes_num += 1
@@ -168,10 +168,11 @@ def switch_like(request, pic_id):
 
 def switch_subscribe(request, sub_profile_id):
     user_profile = log_in_user(request)
+    sub_profile = Profile.objects.get(id=sub_profile_id)
     if user_profile.subs.filter(id=sub_profile_id).exists():
-        user_profile.subs.exclude(id=sub_profile_id)
+        user_profile.subs.remove(sub_profile)
     else:
-        user_profile.subs.add(id=sub_profile_id)
+        user_profile.subs.add(sub_profile)
     user_profile.save()
     return JsonResponse({'status': 'ok'})
 
