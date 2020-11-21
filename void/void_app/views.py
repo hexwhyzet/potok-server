@@ -131,8 +131,6 @@ def subscription_pictures(profile: Profile, session: Session, number: int):
     for picture in pictures:
         picture.views_num += 1
         picture.save()
-        profile.pics_viewed.add(picture)
-        profile.save()
         session.sub_pics.add(picture)
         session.save()
     return pictures
@@ -145,8 +143,6 @@ def feed_pictures(profile: Profile, session: Session, number: int):
     for picture in pictures:
         picture.views_num += 1
         picture.save()
-        profile.pics_viewed.add(picture)
-        profile.save()
         session.feed_pics.add(picture)
         session.save()
     return pictures
@@ -174,6 +170,13 @@ def switch_subscribe(request, sub_profile_id):
     else:
         user_profile.subs.add(sub_profile)
     user_profile.save()
+    return JsonResponse({'status': 'ok'})
+
+
+def mark_as_seen(request, pic_id):
+    user_profile = log_in_user(request)
+    picture = Picture.objects.get(id=pic_id)
+    user_profile.pics_viewed.add(picture)
     return JsonResponse({'status': 'ok'})
 
 

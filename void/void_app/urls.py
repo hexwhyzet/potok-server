@@ -26,6 +26,7 @@ urlpatterns = [
     path("app/subscribe/<int:sub_profile_id>", views.switch_subscribe),
     path("app/create_session", views.create_session_request),
     path("app/upload_picture", views.upload_picture),
+    path("app/mark_as_seen/<int:pic_id>", views.mark_as_seen),
     # path("search/<str:search_string>", views.)
     # path("share/<str:club_id>/<str:source_name>", views.share_picture),
 
