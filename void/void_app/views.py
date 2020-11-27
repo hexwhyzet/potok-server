@@ -10,7 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .config import Secrets, Config
 from .functions import id_gen
 from .importer import pics_json_parser, profiles_json_parser, pic_upload
-from .models import Picture, Profile, Session
+from .models import Picture, Profile, Session, Like, Subscription, View
 
 secrets = Secrets()
 config = Config()
@@ -152,10 +152,10 @@ def switch_like(request, pic_id):
     user_profile = log_in_user(request)
     picture = Picture.objects.get(id=pic_id)
     if not user_profile.pics_liked.filter(id=pic_id).exists():
-        user_profile.pics_liked.add(picture)
+        Like.objects.create(picture=picture, profile=user_profile)
         picture.likes_num += 1
     else:
-        user_profile.pics_liked.remove(picture)
+        Like.objects.get(picture=picture, profile=user_profile).delete()
         picture.likes_num -= 1
     user_profile.save()
     picture.save()
@@ -166,9 +166,9 @@ def switch_subscribe(request, sub_profile_id):
     user_profile = log_in_user(request)
     sub_profile = Profile.objects.get(id=sub_profile_id)
     if user_profile.subs.filter(id=sub_profile_id).exists():
-        user_profile.subs.remove(sub_profile)
+        Subscription.objects.create(follower=user_profile, source=sub_profile)
     else:
-        user_profile.subs.add(sub_profile)
+        Subscription.objects.get(follower=user_profile, source=sub_profile).delete()
     user_profile.save()
     return JsonResponse({'status': 'ok'})
 
@@ -176,7 +176,7 @@ def switch_subscribe(request, sub_profile_id):
 def mark_as_seen(request, pic_id):
     user_profile = log_in_user(request)
     picture = Picture.objects.get(id=pic_id)
-    user_profile.pics_viewed.add(picture)
+    View.objects.create(picture=picture, profile=user_profile)
     return JsonResponse({'status': 'ok'})
 
 

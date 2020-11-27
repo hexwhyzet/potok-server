@@ -12,7 +12,8 @@ class Profile(models.Model):
     screen_name = models.CharField(max_length=100, null=True, default=None, unique=True, blank=True)
     avatar_url = models.CharField(max_length=100, null=True, default=None, blank=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.CASCADE)
-    subs = models.ManyToManyField("self", symmetrical=False, related_name='followers', blank=True)
+    subs = models.ManyToManyField('self', symmetrical=False, through='Subscription',
+                                  blank=True)
 
 
 class Picture(models.Model):
@@ -23,8 +24,8 @@ class Picture(models.Model):
     res = models.PositiveSmallIntegerField(null=True, default=0, blank=True)
     date = models.DateTimeField(blank=True)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='pics', blank=True, null=True)
-    profiles_liked = models.ManyToManyField(Profile, related_name='pics_liked', blank=True)
-    profiles_viewed = models.ManyToManyField(Profile, related_name='pics_viewed', blank=True)
+    profiles_liked = models.ManyToManyField(Profile, through='Like', related_name='pics_liked', blank=True)
+    profiles_viewed = models.ManyToManyField(Profile, through='View', related_name='pics_viewed', blank=True)
 
     views_num = models.PositiveIntegerField(default=0)
     likes_num = models.PositiveIntegerField(default=0)
@@ -42,6 +43,27 @@ class Picture(models.Model):
         )
         picture.save()
         return picture
+
+
+class Like(models.Model):
+    picture = models.ForeignKey(Picture, on_delete=models.CASCADE)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    date = models.DateTimeField(null=True, blank=True, auto_now=True)
+
+
+class View(models.Model):
+    picture = models.ForeignKey(Picture, on_delete=models.CASCADE)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    date = models.DateTimeField(null=True, blank=True, auto_now=True)
+
+
+class Subscription(models.Model):
+    follower = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='followers')
+    source = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='sources')
+    date = models.DateTimeField(null=True, blank=True, auto_now=True)
+
+    class Meta:
+        unique_together = ('follower', 'source')
 
 
 class Session(models.Model):
