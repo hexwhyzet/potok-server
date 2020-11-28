@@ -54,13 +54,13 @@ class Like(models.Model):
 class View(models.Model):
     picture = models.ForeignKey(Picture, on_delete=models.CASCADE)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
-    date = models.DateTimeField(null=True, blank=True, auto_now=True)
+    date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
 
 
 class Subscription(models.Model):
     follower = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='followers')
     source = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='sources')
-    date = models.DateTimeField(null=True, blank=True, auto_now=True)
+    date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
 
     class Meta:
         unique_together = ('follower', 'source')
