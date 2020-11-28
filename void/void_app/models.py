@@ -12,7 +12,7 @@ class Profile(models.Model):
     screen_name = models.CharField(max_length=100, null=True, default=None, unique=True, blank=True)
     avatar_url = models.CharField(max_length=100, null=True, default=None, blank=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.CASCADE)
-    subs = models.ManyToManyField('self', symmetrical=False, through='Subscription',
+    subs = models.ManyToManyField('self', symmetrical=False, through='Subscription', related_name='followers',
                                   blank=True)
 
 
@@ -58,8 +58,8 @@ class View(models.Model):
 
 
 class Subscription(models.Model):
-    follower = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='followers')
-    source = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='sources')
+    follower = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='sub_followers')
+    source = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='sub_sources')
     date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
 
     class Meta:
