@@ -48,7 +48,7 @@ class Picture(models.Model):
 class Like(models.Model):
     picture = models.ForeignKey(Picture, on_delete=models.CASCADE)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
-    date = models.DateTimeField(null=True, blank=True, auto_now=True)
+    date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
 
 
 class View(models.Model):
