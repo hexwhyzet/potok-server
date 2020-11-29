@@ -16,6 +16,14 @@ secrets = Secrets()
 config = Config()
 
 
+def login_user(func):
+    def wrapper(request, *args, **kwargs):
+        profile = log_in_user(request)
+        return func(request, profile, *args, **kwargs)
+
+    return wrapper
+
+
 def construct_app_response(status, content):
     response = {
         "status": status,
@@ -38,34 +46,34 @@ def create_session(profile):
     return session
 
 
-def create_session_request(request):
-    profile = log_in_user(request)
-    session = create_session(profile)
+@login_user
+def create_session_request(request, user_profile):
+    session = create_session(user_profile)
     answer = {
         "token": session.token,
     }
     return construct_app_response("ok", answer)
 
 
-def app_subscription_pictures(request, session_token, number):
-    profile = log_in_user(request)
+@login_user
+def app_subscription_pictures(request, user_profile, session_token, number):
     session = Session.objects.get(token=session_token)
-    pictures = subscription_pictures(profile, session, number)
-    response_content = list(map(lambda pic: construct_picture_response(profile, pic), pictures))
+    pictures = subscription_pictures(user_profile, session, number)
+    response_content = list(map(lambda pic: construct_picture_response(user_profile, pic), pictures))
     return construct_app_response("ok", response_content)
 
 
-def app_feed_pictures(request, session_token, number):
-    profile = log_in_user(request)
+@login_user
+def app_feed_pictures(request, user_profile, session_token, number):
     session = Session.objects.get(token=session_token)
-    pictures = feed_pictures(profile, session, number)
-    response_content = list(map(lambda pic: construct_picture_response(profile, pic), pictures))
+    pictures = feed_pictures(user_profile, session, number)
+    response_content = list(map(lambda pic: construct_picture_response(user_profile, pic), pictures))
     return construct_app_response("ok", response_content)
 
 
-def app_my_profile(request):
-    profile = log_in_user(request)
-    response_content = construct_profile_response(profile, profile)
+@login_user
+def app_my_profile(request, user_profile):
+    response_content = construct_profile_response(user_profile, user_profile)
     return construct_app_response("ok", response_content)
 
 
@@ -102,18 +110,18 @@ def construct_profile_response(user_profile: Profile, profile: Profile):
     return answer
 
 
-def profile_pictures(request, profile_id, number=10, offset=0):
-    profile = log_in_user(request)
+@login_user
+def profile_pictures(request, user_profile, profile_id, number=10, offset=0):
     pics = Picture.objects.filter(profile__id=profile_id).order_by('-date')[offset:offset + number]
-    answer = list(map(lambda pic: construct_picture_response(profile, pic), pics))
+    answer = list(map(lambda pic: construct_picture_response(user_profile, pic), pics))
     return construct_app_response("ok", answer)
 
 
 @csrf_exempt
-def upload_picture(request):
-    profile = log_in_user(request)
+@login_user
+def upload_picture(request, user_profile):
     picture_data = base64.b64decode(request.POST["picture"])
-    pic_upload(picture_data, profile, request.POST["extension"])
+    pic_upload(picture_data, user_profile, request.POST["extension"])
     return JsonResponse({'status': 'ok'})
 
 
@@ -148,8 +156,8 @@ def feed_pictures(profile: Profile, session: Session, number: int):
     return pictures
 
 
-def switch_like(request, pic_id):
-    user_profile = log_in_user(request)
+@login_user
+def switch_like(request, user_profile, pic_id):
     picture = Picture.objects.get(id=pic_id)
     if Like.objects.filter(picture=picture, profile=user_profile).exists():
         Like.objects.get(picture=picture, profile=user_profile).delete()
@@ -162,8 +170,8 @@ def switch_like(request, pic_id):
     return JsonResponse({'status': 'ok'})
 
 
-def switch_subscribe(request, sub_profile_id):
-    user_profile = log_in_user(request)
+@login_user
+def switch_subscribe(request, user_profile, sub_profile_id):
     sub_profile = Profile.objects.get(id=sub_profile_id)
     if Subscription.objects.filter(follower=user_profile, source=sub_profile).exists():
         Subscription.objects.get(follower=user_profile, source=sub_profile).delete()
@@ -173,8 +181,8 @@ def switch_subscribe(request, sub_profile_id):
     return JsonResponse({'status': 'ok'})
 
 
-def mark_as_seen(request, pic_id):
-    user_profile = log_in_user(request)
+@login_user
+def mark_as_seen(request, user_profile, pic_id):
     picture = Picture.objects.get(id=pic_id)
     View.objects.create(picture=picture, profile=user_profile)
     return JsonResponse({'status': 'ok'})
