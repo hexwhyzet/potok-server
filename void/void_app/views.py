@@ -1,7 +1,7 @@
 import base64
 from random import randint
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AnonymousUser
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
@@ -10,7 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .config import Secrets, Config
 from .functions import id_gen
 from .importer import pics_json_parser, profiles_json_parser, pic_upload
-from .models import Picture, Profile, Session, Like, Subscription, View
+from .models import Picture, Profile, Session, Like, Subscription, View, CustomAnonymousUser
 
 secrets = Secrets()
 config = Config()
@@ -202,23 +202,24 @@ def update_profiles_db(request):
     return JsonResponse({'status': 'ok'})
 
 
-def get_user_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
+def get_device_id(request):
+    if request.method == "GET":
+        return request.GET["device_id"]
+    elif request.method == "POST":
+        return request.GET["device_id"]
     else:
-        ip = request.META.get('REMOTE_ADDR')
-    return ip
+        return "test_device_id"
 
 
 def log_in_user(request) -> Profile:
-    ip = get_user_ip(request)
-    if not Profile.objects.filter(ip=ip).first():
-        new_user = User.objects.create_user(str(randint(1, 100000000000)))
-        new_user.save()
-        profile = Profile()
-        profile.ip = ip
-        profile.user = new_user
+    device_id = get_device_id(request)
+    if not Profile.objects.filter(user__device_id=device_id).exists():
+        anonymous_user = CustomAnonymousUser()
+        anonymous_user.id = str(randint(1, 100000000000))
+        anonymous_user.save()
+        profile = Profile(
+            type=Profile.ProfileType.NOT_ACTIVATED,
+            user=anonymous_user,
+        )
         profile.save()
-    return Profile.objects.filter(ip=ip).first()
+    return Profile.objects.filter(user__device_id=device_id).first()

@@ -21,6 +21,7 @@ def pics_json_parser(json_pics_data):
         pic_minor_id = pic_data['post_id']
         pic_profile_minor_id = 'vk' + str(abs(int(pic_data['source_id'])))
         pic_profile, _ = Profile.objects.get_or_create(
+            type=Profile.ProfileType.SHOWCASE,
             minor_id=pic_profile_minor_id,
             defaults={"user": User.objects.create_user(str(randint(1, 100000000000)))})
         if not Picture.objects.filter(minor_id=pic_minor_id, profile=pic_profile).exists():
@@ -39,6 +40,7 @@ def profiles_json_parser(clubs_data):
     for profile_data in profiles_data:
         minor_id = "vk" + str(abs(int(profile_data['source_id'])))
         profile, _ = Profile.objects.get_or_create(
+            type=Profile.ProfileType.SHOWCASE,
             minor_id=minor_id,
             defaults={"user": User.objects.create_user(str(randint(1, 100000000000)))})
         pic_path = upload_picture_to_bucket(requests.get(profile_data['photo_url']).content,

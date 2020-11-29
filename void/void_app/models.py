@@ -1,13 +1,20 @@
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.utils.translation import gettext as _
 
 
 class Profile(models.Model):
+    class ProfileType(models.TextChoices):
+        SHOWCASE = 'SC', _('Showcase')
+        NOT_ACTIVATED = 'NA', _('Not Activated')
+        ACTIVATED = 'A', _('Activated')
+
     id = models.AutoField(primary_key=True)
+    type = models.CharField(max_length=2, choices=ProfileType.choices, default=ProfileType.NOT_ACTIVATED)
     minor_id = models.CharField(null=True, default=None, max_length=100, unique=True, blank=True)
-    ip = models.CharField(max_length=100, blank=True)
     name = models.CharField(max_length=100, null=True, default=None, blank=True)
     screen_name = models.CharField(max_length=100, null=True, default=None, unique=True, blank=True)
     avatar_url = models.CharField(max_length=100, null=True, default=None, blank=True)
@@ -82,3 +89,9 @@ class Link(models.Model):
     date = models.DateTimeField(auto_now_add=True)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     content = GenericForeignKey('content_type', 'token')
+
+
+class CustomAnonymousUser(User):
+    activation_token = models.CharField(max_length=100, null=True, blank=True)
+    deviceId = models.CharField(max_length=100, null=True, blank=True)
+    prospective_email = models.EmailField()
