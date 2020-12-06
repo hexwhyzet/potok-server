@@ -23,7 +23,7 @@ class Picture(models.Model):
     url = models.CharField(max_length=100, default=None, null=True, blank=True)
     source_url = models.CharField(null=True, default=None, max_length=100, blank=True)
     res = models.PositiveSmallIntegerField(null=True, default=0, blank=True)
-    date = models.DateTimeField(blank=True)
+    date = models.DateTimeField(blank=True, null=True)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='pics', blank=True, null=True)
     profiles_liked = models.ManyToManyField(Profile, through='Like', related_name='pics_liked', blank=True)
     profiles_viewed = models.ManyToManyField(Profile, through='View', related_name='pics_viewed', blank=True)

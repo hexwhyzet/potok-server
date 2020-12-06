@@ -164,11 +164,10 @@ def switch_like(request, user_profile, pic_id):
     picture = Picture.objects.get(id=pic_id)
     if Like.objects.filter(picture=picture, profile=user_profile).exists():
         Like.objects.get(picture=picture, profile=user_profile).delete()
-        picture.likes_num += 1
+        picture.likes_num -= max(0, picture.likes_num - 1)
     else:
         Like.objects.create(picture=picture, profile=user_profile)
-        picture.likes_num -= 1
-    user_profile.save()
+        picture.likes_num += 1
     picture.save()
     return JsonResponse({'status': 'ok'})
 
