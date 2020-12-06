@@ -1,7 +1,8 @@
 import base64
+from itertools import chain
 from random import randint
 
-from django.contrib.auth.models import User, AnonymousUser
+from django.contrib.auth.models import User
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
@@ -18,7 +19,7 @@ config = Config()
 
 def login_user(func):
     def wrapper(request, *args, **kwargs):
-        profile = log_in_user(request)
+        profile = profile_by_token(request)
         return func(request, profile, *args, **kwargs)
 
     return wrapper
@@ -50,7 +51,7 @@ def create_session(profile):
 def create_session_request(request, user_profile):
     session = create_session(user_profile)
     answer = {
-        "token": session.token,
+        "session_token": session.token,
     }
     return construct_app_response("ok", answer)
 
@@ -80,6 +81,7 @@ def app_my_profile(request, user_profile):
 def construct_picture_response(user_profile: Profile, pic: Picture):
     answer = {
         "id": pic.id,
+        "type": "picture",
         "url": f"{config['image_server_url']}{pic.url}",
         "res": pic.res,
         "date": pic.date,
@@ -96,6 +98,7 @@ def construct_picture_response(user_profile: Profile, pic: Picture):
 def construct_profile_response(user_profile: Profile, profile: Profile):
     answer = {
         "id": profile.id,
+        "type": "profile",
         "name": profile.name or "unknown",
         "screen_name": profile.screen_name or "unknown",
         "subs_num": profile.subs.count(),
@@ -188,6 +191,40 @@ def mark_as_seen(request, user_profile, pic_id):
     return JsonResponse({'status': 'ok'})
 
 
+def construct_subscription_response(subscription):
+    answer = {
+        "type": "subscription",
+        "profile": construct_profile_response(subscription.follower),
+        "date": subscription.date,
+    }
+    return answer
+
+
+def construct_like_response(like):
+    answer = {
+        "type": "like",
+        "profile": construct_profile_response(like.follower),
+        "date": like.date,
+    }
+    return answer
+
+
+def construct_action(action):
+    if type(action) == "Like":
+        return construct_like_response(action)
+    elif type(action) == "Subscription":
+        return construct_subscription_response(action)
+
+
+@login_user
+def last_actions(request, user_profile, number, offset):
+    likes = Like.objects.filter(profile=user_profile).order_by('-date')[:offset + number]
+    subscriptions = Subscription.objects.filter(profile=user_profile).order_by('-date')[:offset + number]
+    actions = list(sorted(chain(likes, subscriptions), key=lambda action: action.date))[offset:offset + number]
+    answer = [construct_action(action) for action in actions]
+    return construct_app_response("ok", answer)
+
+
 @csrf_exempt
 def update_pics_db(request):
     post_json = request.POST["archive"]
@@ -206,20 +243,46 @@ def get_device_id(request):
     if request.method == "GET":
         return request.GET["device_id"]
     elif request.method == "POST":
-        return request.GET["device_id"]
+        return request.POST["device_id"]
     else:
-        return "test_device_id"
+        raise ValueError("Request has no attribute 'device_id'")
 
 
-def log_in_user(request) -> Profile:
+def get_token(request):
+    if request.method == "GET":
+        return request.GET["auth_token"]
+    elif request.method == "POST":
+        return request.POST["auth_token"]
+    else:
+        return ValueError("Request has no attribute 'token'")
+
+
+def profile_by_token(request) -> Profile:
+    token = get_token(request)
+    if not CustomAnonymousUser.objects.filter(token=token).exists():
+        anonymous_user = CustomAnonymousUser.objects.filter(token=token).first()
+        return anonymous_user.profile
+    else:
+        raise ValueError("User with this token was not found")
+
+
+def log_in_via_device_id(request):
     device_id = get_device_id(request)
-    if not Profile.objects.filter(user__device_id=device_id).exists():
-        anonymous_user = CustomAnonymousUser()
-        anonymous_user.id = str(randint(1, 100000000000))
-        anonymous_user.save()
+    if not CustomAnonymousUser.objects.filter(device_id=device_id).exists():
+        anonymous_user = CustomAnonymousUser(
+            id=str(randint(1, 100000000000)),
+            device_id=device_id,
+            token=id_gen(80),
+        )
+        # anonymous_user.id = str(randint(1, 100000000000))
         profile = Profile(
-            type=Profile.ProfileType.NOT_ACTIVATED,
             user=anonymous_user,
         )
+        anonymous_user.save()
         profile.save()
-    return Profile.objects.filter(user__device_id=device_id).first()
+        return construct_app_response("ok", {"auth_token": anonymous_user.token})
+    else:
+        return construct_app_response(
+            "ok",
+            {"auth_token": CustomAnonymousUser.objects.filter(device_id=device_id).first().token},
+        )

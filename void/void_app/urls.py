@@ -30,6 +30,8 @@ urlpatterns = [
     # path("search/<str:search_string>", views.)
     # path("share/<str:club_id>/<str:source_name>", views.share_picture),
 
+    path("auth/device_id", views.log_in_via_device_id),
+
     path("send_clubs", views.update_profiles_db),
     path("send_posts", views.update_pics_db),
 
