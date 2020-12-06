@@ -11,7 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .config import Secrets, Config
 from .functions import id_gen
 from .importer import pics_json_parser, profiles_json_parser, pic_upload
-from .models import Picture, Profile, Session, Like, Subscription, View, CustomAnonymousUser
+from .models import Picture, Profile, Session, Like, Subscription, View, CustomAnonymousUser, CustomUser
 
 secrets = Secrets()
 config = Config()
@@ -259,9 +259,12 @@ def get_token(request):
 
 def profile_by_token(request) -> Profile:
     token = get_token(request)
-    if not CustomAnonymousUser.objects.filter(token=token).exists():
+    if CustomAnonymousUser.objects.filter(token=token).exists():
         anonymous_user = CustomAnonymousUser.objects.filter(token=token).first()
         return anonymous_user.profile
+    elif CustomUser.objects.filter(token=token).exists():
+        user = CustomUser.objects.filter(token=token).first()
+        return user.profile
     else:
         raise ValueError("User with this token was not found")
 
