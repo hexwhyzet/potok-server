@@ -105,7 +105,7 @@ def construct_profile_response(user_profile: Profile, profile: Profile):
         "followers_num": profile.followers.count(),
         "views_num": profile.pics.aggregate(views_num=Coalesce(Sum('views_num'), 0))['views_num'],
         "likes_num": profile.pics.aggregate(likes_num=Coalesce(Sum('likes_num'), 0))['likes_num'],
-        "avatar_url": f"{config['image_server_url']}{profile.avatar_url or '/defaults/avatar.jpg'}",
+        "avatar_url": f"{config['image_server_url']}{profile.avatar_url or '/defaults/avatar.png'}",
         "is_subscribed": user_profile.subs.filter(id=profile.id).exists(),
         "subscribe_url": f"{config['main_server_url']}/app/subscribe/{profile.id}",
         "is_yours": profile == user_profile,
