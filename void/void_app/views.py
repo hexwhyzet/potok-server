@@ -218,7 +218,7 @@ def construct_action(user_profile, action):
 
 @login_user
 def last_actions(request, user_profile, number, offset):
-    likes = Like.objects.filter(profile=user_profile).order_by('-date')[:offset + number]
+    likes = Like.objects.filter(picture__profile=user_profile).order_by('-date')[:offset + number]
     subscriptions = Subscription.objects.filter(source=user_profile).order_by('-date')[:offset + number]
     actions = list(sorted(chain(likes, subscriptions), key=lambda action: action.date))[offset:offset + number]
     answer = [construct_action(user_profile, action) for action in actions]
