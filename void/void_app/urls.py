@@ -27,6 +27,7 @@ urlpatterns = [
     path("app/create_session", views.create_session_request),
     path("app/upload_picture", views.upload_picture),
     path("app/mark_as_seen/<int:pic_id>", views.mark_as_seen),
+    path("app/last_actions/<int:number>/<int:offset>", views.last_actions),
     # path("search/<str:search_string>", views.)
     # path("share/<str:club_id>/<str:source_name>", views.share_picture),
 

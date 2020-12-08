@@ -190,37 +190,38 @@ def mark_as_seen(request, user_profile, pic_id):
     return JsonResponse({'status': 'ok'})
 
 
-def construct_subscription_response(subscription):
+def construct_subscription_response(user_profile, subscription):
     answer = {
         "type": "subscription",
-        "profile": construct_profile_response(subscription.follower),
-        "date": subscription.date,
+        "profile": construct_profile_response(user_profile, subscription.follower),
+        "date": int(subscription.date.timestamp()),
     }
     return answer
 
 
-def construct_like_response(like):
+def construct_like_response(user_profile, like):
     answer = {
         "type": "like",
-        "profile": construct_profile_response(like.follower),
-        "date": like.date,
+        "profile": construct_profile_response(user_profile, like.profile),
+        "picture": construct_picture_response(user_profile, like.picture),
+        "date": int(like.date.timestamp()),
     }
     return answer
 
 
-def construct_action(action):
-    if type(action) == "Like":
-        return construct_like_response(action)
-    elif type(action) == "Subscription":
-        return construct_subscription_response(action)
+def construct_action(user_profile, action):
+    if isinstance(action, Like):
+        return construct_like_response(user_profile, action)
+    elif isinstance(action, Subscription):
+        return construct_subscription_response(user_profile, action)
 
 
 @login_user
 def last_actions(request, user_profile, number, offset):
     likes = Like.objects.filter(profile=user_profile).order_by('-date')[:offset + number]
-    subscriptions = Subscription.objects.filter(profile=user_profile).order_by('-date')[:offset + number]
+    subscriptions = Subscription.objects.filter(source=user_profile).order_by('-date')[:offset + number]
     actions = list(sorted(chain(likes, subscriptions), key=lambda action: action.date))[offset:offset + number]
-    answer = [construct_action(action) for action in actions]
+    answer = [construct_action(user_profile, action) for action in actions]
     return construct_app_response("ok", answer)
 
 
