@@ -1,11 +1,14 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <title>Shared meme</title>
-    <meta property="og:image">
-    <link rel="image_src" href="{{ image_url }}">
+    <meta property="og:image" content="{{ picture.url }}">
+    <link rel="stylesheet" href="{% static 'share/style.css' %}"/>
 </head>
 <body>
-<img src="{{ image_url }}">
+<div>
+    <img src="{{ picture.url }}" class="contain">
+</div>
 </body>
-</html>
+</html>jyd5%k--FR8fG$U

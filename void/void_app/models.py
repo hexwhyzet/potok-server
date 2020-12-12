@@ -77,12 +77,13 @@ class Session(models.Model):
 
 
 class Link(models.Model):
-    token = models.SlugField(primary_key=True)
+    id = models.BigAutoField(primary_key=True)
     sender = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='links_sender', blank=False)
-    receiver = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='links_receiver', blank=True)
+    receiver = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='links_receiver', blank=True, null=True)
     date = models.DateTimeField(auto_now_add=True)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    content = GenericForeignKey('content_type', 'token')
+    object_id = models.BigIntegerField(null=True, blank=True)
+    content = GenericForeignKey('content_type', 'object_id')
 
 
 class CustomAnonymousUser(User):

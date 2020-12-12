@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Profile, Picture, Session, Like, Subscription, View, CustomAnonymousUser, CustomUser
+from .models import Profile, Picture, Session, Like, Subscription, View, CustomAnonymousUser, CustomUser, Link
 
 # Register your models here.
 
@@ -12,3 +12,4 @@ admin.site.register(Subscription)
 admin.site.register(View)
 admin.site.register(CustomAnonymousUser)
 admin.site.register(CustomUser)
+admin.site.register(Link)

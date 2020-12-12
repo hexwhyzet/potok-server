@@ -1,7 +1,10 @@
+import time
 from random import choices
 from string import ascii_lowercase, ascii_uppercase, digits
 
-from .models import Link
+# from .models import Link
+
+from base64 import urlsafe_b64encode, urlsafe_b64decode
 
 
 def id_gen(length=6):
@@ -10,13 +13,13 @@ def id_gen(length=6):
     return generated_id
 
 
-def link_token_gen():
-    if Link.objects.count() == 0:
-        return 'a'
-    else:
-        last_token = Link.objects.last().token
-        new_token = next_token(last_token)
-        return new_token
+# def link_token_gen():
+#     if Link.objects.count() == 0:
+#         return 'a'
+#     else:
+#         last_token = Link.objects.last().token
+#         new_token = next_token(last_token)
+#         return new_token
 
 
 def next_token(token):
@@ -50,8 +53,27 @@ def next_token(token):
     return new_token
 
 
+def token_from_id(int_id):
+    bytes_id = int_id.to_bytes((int_id.bit_length() + 7) // 8, 'big') or b'\0'
+    token = urlsafe_b64encode(bytes_id).removesuffix(b'=').removesuffix(b'=').decode("ascii")
+    return token
+
+
+def id_from_token(token):
+    if len(token) % 4 != 0:
+        token += '=' * (4 - len(token) % 4)
+    bytes_token = urlsafe_b64decode(token)
+    int_id = int.from_bytes(bytes_token, 'big')
+    return int_id
+
+
 if __name__ == '__main__':
-    token = 'a'
-    for i in range(int(1e6)):
-        print(token)
-        token = link_token_gen(token)
+    pass
+    # token = 'a'
+    # for i in range(20000000, 1000000000):
+    #     id = i
+    #     token = token_from_id(i)
+    #     re_id = id_from_token(token)
+    #     # print(token)
+    #     if id != re_id:
+    #         print("Look", id)

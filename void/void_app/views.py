@@ -3,15 +3,17 @@ from itertools import chain
 from random import randint
 
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
 from .config import Secrets, Config
-from .functions import id_gen
+from .functions import id_gen, token_from_id, id_from_token
 from .importer import pics_json_parser, profiles_json_parser, pic_upload
-from .models import Picture, Profile, Session, Like, Subscription, View, CustomAnonymousUser, CustomUser
+from .models import Picture, Profile, Session, Like, Subscription, View, CustomAnonymousUser, CustomUser, Link
 
 secrets = Secrets()
 config = Config()
@@ -60,7 +62,7 @@ def create_session_request(request, user_profile):
 def app_subscription_pictures(request, user_profile, session_token, number):
     session = Session.objects.get(token=session_token)
     pictures = subscription_pictures(user_profile, session, number)
-    response_content = list(map(lambda pic: construct_picture_response(user_profile, pic), pictures))
+    response_content = list(map(lambda pic: construct_picture_response(pic, user_profile), pictures))
     return construct_app_response("ok", response_content)
 
 
@@ -68,7 +70,7 @@ def app_subscription_pictures(request, user_profile, session_token, number):
 def app_feed_pictures(request, user_profile, session_token, number):
     session = Session.objects.get(token=session_token)
     pictures = feed_pictures(user_profile, session, number)
-    response_content = list(map(lambda pic: construct_picture_response(user_profile, pic), pictures))
+    response_content = list(map(lambda pic: construct_picture_response(pic, user_profile), pictures))
     return construct_app_response("ok", response_content)
 
 
@@ -78,7 +80,7 @@ def app_my_profile(request, user_profile):
     return construct_app_response("ok", response_content)
 
 
-def construct_picture_response(user_profile: Profile, pic: Picture):
+def construct_picture_response(pic: Picture, user_profile: Profile = None):
     answer = {
         "id": pic.id,
         "type": "picture",
@@ -88,26 +90,28 @@ def construct_picture_response(user_profile: Profile, pic: Picture):
         "views_num": pic.views_num,
         "likes_num": pic.likes_num,
         "shares_num": pic.shares_num,
-        "is_liked": pic.profiles_liked.filter(id=user_profile.id).exists(),
+        "is_liked": pic.profiles_liked.filter(id=user_profile.id).exists() if user_profile is not None else None,
         "like_url": f"{config['main_server_url']}/app/like_picture/{pic.id}",
-        "profile": construct_profile_response(user_profile, pic.profile)
+        "share_url": f"{config['main_server_url']}/app/share_picture/{pic.id}",
+        "profile": construct_profile_response(pic.profile, user_profile)
     }
     return answer
 
 
-def construct_profile_response(user_profile: Profile, profile: Profile):
+def construct_profile_response(profile: Profile, user_profile: Profile = None):
     answer = {
         "id": profile.id,
         "type": "profile",
         "name": profile.name or "unknown",
         "screen_name": profile.screen_name or "unknown",
-        "subs_num": profile.subs.count(),
+        "subs_num": profile.subs.count() if user_profile is not None else None,
         "followers_num": profile.followers.count(),
         "views_num": profile.pics.aggregate(views_num=Coalesce(Sum('views_num'), 0))['views_num'],
         "likes_num": profile.pics.aggregate(likes_num=Coalesce(Sum('likes_num'), 0))['likes_num'],
         "avatar_url": f"{config['image_server_url']}{profile.avatar_url or '/defaults/avatar.png'}",
-        "is_subscribed": user_profile.subs.filter(id=profile.id).exists(),
+        "is_subscribed": user_profile.subs.filter(id=profile.id).exists() if user_profile is not None else None,
         "subscribe_url": f"{config['main_server_url']}/app/subscribe/{profile.id}",
+        "share_url": f"{config['main_server_url']}/app/share_profile/{profile.id}",
         "is_yours": profile == user_profile,
     }
     return answer
@@ -116,7 +120,7 @@ def construct_profile_response(user_profile: Profile, profile: Profile):
 @login_user
 def profile_pictures(request, user_profile, profile_id, number=10, offset=0):
     pics = Picture.objects.filter(profile__id=profile_id).order_by('-date')[offset:offset + number]
-    answer = list(map(lambda pic: construct_picture_response(user_profile, pic), pics))
+    answer = list(map(lambda pic: construct_picture_response(pic, user_profile), pics))
     return construct_app_response("ok", answer)
 
 
@@ -193,7 +197,7 @@ def mark_as_seen(request, user_profile, pic_id):
 def construct_subscription_response(user_profile, subscription):
     answer = {
         "type": "subscription",
-        "profile": construct_profile_response(user_profile, subscription.follower),
+        "profile": construct_profile_response(subscription.follower, user_profile),
         "date": int(subscription.date.timestamp()),
     }
     return answer
@@ -202,8 +206,8 @@ def construct_subscription_response(user_profile, subscription):
 def construct_like_response(user_profile, like):
     answer = {
         "type": "like",
-        "profile": construct_profile_response(user_profile, like.profile),
-        "picture": construct_picture_response(user_profile, like.picture),
+        "profile": construct_profile_response(like.profile, user_profile),
+        "picture": construct_picture_response(like.picture, user_profile),
         "date": int(like.date.timestamp()),
     }
     return answer
@@ -215,6 +219,34 @@ def construct_action(user_profile, action):
     elif isinstance(action, Subscription):
         return construct_subscription_response(user_profile, action)
 
+
+@login_user
+def generate_profile_share_link(request, user_profile, profile_id):
+    profile = Profile.objects.filter(id=profile_id).first()
+    link = Link.objects.create(sender=user_profile, content_type=ContentType.objects.get_for_model(profile), content=profile)
+    share_token = token_from_id(link.id)
+    answer = {"share_url": f"{config['main_server_url']}/share/{share_token}"}
+    return construct_app_response("ok", answer)
+
+
+@login_user
+def generate_picture_share_link(request, user_profile, pic_id):
+    picture = Picture.objects.filter(id=pic_id).first()
+    link = Link.objects.create(sender=user_profile, content_type=ContentType.objects.get_for_model(picture), content=picture)
+    share_token = token_from_id(link.id)
+    answer = {"share_url": f"{config['main_server_url']}/share/{share_token}"}
+    return construct_app_response("ok", answer)
+
+
+def get_content_by_link(request, share_token):
+    link = Link.objects.filter(id=id_from_token(share_token)).first()
+    if isinstance(link.content, Picture):
+        answer = construct_picture_response(link.content)
+        return render(request, 'void_app/share.html', {"picture": answer})
+    elif isinstance(link.content, Profile):
+        answer = construct_profile_response(link.content)
+        return construct_app_response("ok", answer)
+    return construct_app_response("Not found", None)
 
 @login_user
 def last_actions(request, user_profile, number, offset):
