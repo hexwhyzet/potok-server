@@ -37,7 +37,7 @@ def construct_app_response(status, content):
 
 # def share_picture(request, club_id, source_name):
 #     context = {"image_url": f"{config['image_server_url']}/{club_id}/{source_name}"}
-#     template = loader.get_template("void_app/share.html")
+#     template = loader.get_template("potok_service/share.html")
 #     return HttpResponse(template.render(context))
 
 
@@ -242,7 +242,7 @@ def get_content_by_link(request, share_token):
     link = Link.objects.filter(id=id_from_token(share_token)).first()
     if isinstance(link.content, Picture):
         answer = construct_picture_response(link.content)
-        return render(request, 'void_app/share.html', {"picture": answer})
+        return render(request, 'potok_service/share.html', {"picture": answer})
     elif isinstance(link.content, Profile):
         answer = construct_profile_response(link.content)
         return construct_app_response("ok", answer)

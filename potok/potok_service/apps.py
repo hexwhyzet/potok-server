@@ -1,5 +1,5 @@
 from django.apps import AppConfig
 
 
-class VoidAppConfig(AppConfig):
-    name = 'void_app'
+class PotokAppConfig(AppConfig):
+    name = 'potok_service'

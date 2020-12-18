@@ -21,7 +21,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('void_app.urls')),
+    path('', include('potok_service.urls')),
 ]
 
 urlpatterns += staticfiles_urlpatterns()

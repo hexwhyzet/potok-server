@@ -33,7 +33,7 @@ ALLOWED_HOSTS = [config["main_server_ip"]]
 # Application definition
 
 INSTALLED_APPS = [
-    'void_app.apps.VoidAppConfig',
+    'potok_service.apps.PotokAppConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -119,7 +119,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'void_app/static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'potok_service/static')
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
