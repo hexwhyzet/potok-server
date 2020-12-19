@@ -242,7 +242,7 @@ def get_content_by_link(request, share_token):
     link = Link.objects.filter(id=id_from_token(share_token)).first()
     if isinstance(link.content, Picture):
         answer = construct_picture_response(link.content)
-        return render(request, 'potok_service/share.html', {"picture": answer})
+        return render(request, 'share.html', {"picture": answer})
     elif isinstance(link.content, Profile):
         answer = construct_profile_response(link.content)
         return construct_app_response("ok", answer)
