@@ -3,3 +3,4 @@ boto3>=1.16.21
 requests>=2.25.0
 pytz~=2020.4
 django-rename-app>=0.1.2
+psycopg2-binary

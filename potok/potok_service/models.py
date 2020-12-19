@@ -21,7 +21,7 @@ class Picture(models.Model):
     id = models.BigAutoField(primary_key=True)
     minor_id = models.CharField(null=True, default=None, max_length=100, blank=True)
     url = models.CharField(max_length=100, default=None, null=True, blank=True)
-    source_url = models.CharField(null=True, default=None, max_length=100, blank=True)
+    source_url = models.CharField(null=True, default=None, max_length=1000, blank=True)
     res = models.PositiveSmallIntegerField(null=True, default=0, blank=True)
     date = models.DateTimeField(blank=True, null=True)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='pics', blank=True, null=True)

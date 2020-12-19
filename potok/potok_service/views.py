@@ -304,7 +304,7 @@ def profile_by_token(request) -> Profile:
 def log_in_via_device_id(request):
     device_id = get_device_id(request)
     if not CustomAnonymousUser.objects.filter(device_id=device_id).exists():
-        random_int = randint(1, 100000000000)
+        random_int = randint(1, 1000000000)
         anonymous_user = CustomAnonymousUser(
             id=str(random_int),
             device_id=device_id,
