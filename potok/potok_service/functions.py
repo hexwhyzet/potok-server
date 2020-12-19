@@ -53,18 +53,45 @@ def next_token(token):
     return new_token
 
 
-def token_from_id(int_id):
-    bytes_id = int_id.to_bytes((int_id.bit_length() + 7) // 8, 'big') or b'\0'
-    token = urlsafe_b64encode(bytes_id).removesuffix(b'=').removesuffix(b'=').decode("ascii")
-    return token
+# def token_from_id(int_id):
+#     bytes_id = int_id.to_bytes((int_id.bit_length() + 7) // 8, 'big') or b'\0'
+#     token = urlsafe_b64encode(bytes_id).decode("ascii")
+#     return token
+#
+#
+# def id_from_token(token):
+#     # if len(token) % 4 != 0:
+#     #     token += '=' * (4 - len(token) % 4)
+#     bytes_token = urlsafe_b64decode(token)
+#     int_id = int.from_bytes(bytes_token, 'big')
+#     return int_id
+
+ALPHABET = ascii_uppercase + ascii_lowercase + \
+           digits + '-_'
+ALPHABET_REVERSE = dict((c, i) for (i, c) in enumerate(ALPHABET))
+BASE = len(ALPHABET)
+SIGN_CHARACTER = '$'
 
 
-def id_from_token(token):
-    if len(token) % 4 != 0:
-        token += '=' * (4 - len(token) % 4)
-    bytes_token = urlsafe_b64decode(token)
-    int_id = int.from_bytes(bytes_token, 'big')
-    return int_id
+def token_from_id(n):
+    if n < 0:
+        return SIGN_CHARACTER + token_from_id(-n)
+    s = []
+    while True:
+        n, r = divmod(n, BASE)
+        s.append(ALPHABET[r])
+        if n == 0:
+            break
+    return ''.join(reversed(s))
+
+
+def id_from_token(s):
+    if s[0] == SIGN_CHARACTER:
+        return -id_from_token(s[1:])
+    n = 0
+    for c in s:
+        n = n * BASE + ALPHABET_REVERSE[c]
+    return n
 
 
 if __name__ == '__main__':
