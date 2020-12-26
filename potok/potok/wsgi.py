@@ -1,5 +1,5 @@
 """
-WSGI config for void project.
+WSGI config for potok project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 

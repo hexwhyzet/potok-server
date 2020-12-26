@@ -1,4 +1,4 @@
-"""void URL Configuration
+"""potok URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/3.0/topics/http/urls/
@@ -22,16 +22,16 @@ urlpatterns = [
     path("app/subscription_pictures/<str:session_token>/<int:number>", views.app_subscription_pictures),
     path("app/feed_pictures/<str:session_token>/<int:number>", views.app_feed_pictures),
     path("app/profile_pictures/<int:profile_id>/<int:number>/<int:offset>", views.profile_pictures),
-    path("app/like_picture/<int:pic_id>", views.switch_like),
-    path("app/subscribe/<int:sub_profile_id>", views.switch_subscribe),
+    path("app/like_picture/<int:pic_id>", views.app_switch_like),
+    path("app/subscribe/<int:sub_profile_id>", views.app_switch_subscription),
     path("app/create_session", views.create_session_request),
     path("app/upload_picture", views.upload_picture),
     path("app/mark_as_seen/<int:pic_id>", views.mark_as_seen),
     path("app/last_actions/<int:number>/<int:offset>", views.last_actions),
-    # path("search/<str:search_string>", views.)
     path("app/share_profile/<str:profile_id>", views.generate_profile_share_link),
     path("app/share_picture/<str:pic_id>", views.generate_picture_share_link),
-    path("share/<str:share_token>", views.get_content_by_link),
+    path("share/<str:share_token>", views.content_by_link),
+    # path("search/<str:search_string>", views.)
 
     path("auth/device_id", views.log_in_via_device_id),
 

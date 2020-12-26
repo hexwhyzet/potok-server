@@ -1,4 +1,4 @@
 /configs/config.json
 /configs/secrets.json
-/void/db.sqlite3
-/void/media
+/potok/db.sqlite3
+/potok/media

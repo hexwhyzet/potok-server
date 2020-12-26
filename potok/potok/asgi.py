@@ -1,5 +1,5 @@
 """
-ASGI config for void project.
+ASGI config for potok project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 

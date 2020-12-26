@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class PotokAppConfig(AppConfig):
-    name = 'potok_service'
+    name = 'potok_app'
