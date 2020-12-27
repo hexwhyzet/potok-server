@@ -11,7 +11,7 @@ from .services.authorizer import login_user, get_device_id, anonymous_user_exist
 from .config import Secrets, Config
 from .importer import pics_json_parser, profiles_json_parser, pic_upload
 from .models import Picture, Profile, Like, Subscription
-from .services.actions import switch_like, last_actions_objects, add_view
+from .services.actions import switch_like, last_actions_objects, add_view, switch_subscription
 from .services.link import link_by_share_token, create_link, share_token_by_link
 from .services.picture import subscription_pictures_objects, feed_pictures_objects, profile_pictures_objects, \
     picture_by_id
@@ -154,7 +154,7 @@ def app_switch_like(request, user_profile, pic_id):
 @login_user
 def app_switch_subscription(request, user_profile, sub_profile_id):
     sub_profile = Profile.objects.get(id=sub_profile_id)
-    app_switch_subscription(user_profile, sub_profile)
+    switch_subscription(user_profile, sub_profile)
     return construct_app_response("ok", None)
 
 
