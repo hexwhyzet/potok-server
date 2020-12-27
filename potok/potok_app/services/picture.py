@@ -5,7 +5,7 @@ def picture_by_id(picture_id):
     return Picture.objects.get(id=picture_id)
 
 
-def subscription_pictures_objects(profile: Profile, session: Session, number: int):
+def subscription_pictures(profile: Profile, session: Session, number: int):
     pictures = Picture.objects.filter(profile__followers=profile).exclude(profiles_viewed=profile).exclude(
         id__in=[m.id for m in session.feed_pics.all() | session.sub_pics.all()]).exclude(
         profile__id=profile.id).order_by("-date")[:number]
@@ -17,7 +17,7 @@ def subscription_pictures_objects(profile: Profile, session: Session, number: in
     return pictures
 
 
-def feed_pictures_objects(profile: Profile, session: Session, number: int):
+def feed_pictures(profile: Profile, session: Session, number: int):
     pictures = Picture.objects.exclude(profiles_viewed=profile).exclude(
         id__in=[m.id for m in session.feed_pics.all() | session.sub_pics.all()]).exclude(
         profile__id=profile.id).order_by("-date")[:number]
@@ -29,6 +29,6 @@ def feed_pictures_objects(profile: Profile, session: Session, number: int):
     return pictures
 
 
-def profile_pictures_objects(profile_id, number=10, offset=0):
+def profile_pictures(profile_id, number=10, offset=0):
     pictures = Picture.objects.filter(profile__id=profile_id).order_by('-date')[offset:offset + number]
     return pictures

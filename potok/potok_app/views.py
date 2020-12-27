@@ -11,9 +11,9 @@ from .services.authorizer import login_user, get_device_id, anonymous_user_exist
 from .config import Secrets, Config
 from .importer import pics_json_parser, profiles_json_parser, pic_upload
 from .models import Picture, Profile, Like, Subscription
-from .services.actions import switch_like, last_actions_objects, add_view, switch_subscription
+from .services.actions import switch_like, last_actions, add_view, switch_subscription
 from .services.link import link_by_share_token, create_link, share_token_by_link
-from .services.picture import subscription_pictures_objects, feed_pictures_objects, profile_pictures_objects, \
+from .services.picture import subscription_pictures, feed_pictures, profile_pictures, \
     picture_by_id
 from .services.profile import profile_by_id
 from .services.session import create_session, session_by_token
@@ -99,7 +99,7 @@ def construct_action(user_profile, action):
 
 
 @login_user
-def create_session_request(request, user_profile):
+def app_create_session_request(request, user_profile):
     session = create_session(user_profile)
     response_content = {
         "session_token": session.token,
@@ -110,7 +110,7 @@ def create_session_request(request, user_profile):
 @login_user
 def app_subscription_pictures(request, user_profile, session_token, number):
     session = session_by_token(session_token)
-    pictures = subscription_pictures_objects(user_profile, session, number)
+    pictures = subscription_pictures(user_profile, session, number)
     response_content = construct_pictures(pictures, user_profile)
     return construct_app_response("ok", response_content)
 
@@ -118,7 +118,7 @@ def app_subscription_pictures(request, user_profile, session_token, number):
 @login_user
 def app_feed_pictures(request, user_profile, session_token, number):
     session = session_by_token(session_token)
-    pictures = feed_pictures_objects(user_profile, session, number)
+    pictures = feed_pictures(user_profile, session, number)
     response_content = construct_pictures(pictures, user_profile)
     return construct_app_response("ok", response_content)
 
@@ -130,23 +130,23 @@ def app_my_profile(request, user_profile):
 
 
 @login_user
-def profile_pictures(request, user_profile, profile_id, number=10, offset=0):
-    pictures = profile_pictures_objects(profile_id, number, offset)
+def app_profile_pictures(request, user_profile, profile_id, number=10, offset=0):
+    pictures = profile_pictures(profile_id, number, offset)
     response_content = construct_pictures(pictures, user_profile)
     return construct_app_response("ok", response_content)
 
 
 @csrf_exempt
 @login_user
-def upload_picture(request, user_profile):
+def app_upload_picture(request, user_profile):
     picture_data = base64.b64decode(request.POST["picture"])
     pic_upload(picture_data, user_profile, request.POST["extension"])
     return construct_app_response("ok", None)
 
 
 @login_user
-def app_switch_like(request, user_profile, pic_id):
-    picture = picture_by_id(pic_id)
+def app_switch_like(request, user_profile, picture_id):
+    picture = picture_by_id(picture_id)
     switch_like(user_profile, picture)
     return construct_app_response("ok", None)
 
@@ -159,13 +159,13 @@ def app_switch_subscription(request, user_profile, sub_profile_id):
 
 
 @login_user
-def mark_as_seen(request, user_profile, picture_id):
+def app_add_view(request, user_profile, picture_id):
     add_view(user_profile, picture_by_id(picture_id))
     return construct_app_response("ok", None)
 
 
 @login_user
-def generate_profile_share_link(request, user_profile, profile_id):
+def app_generate_profile_share_link(request, user_profile, profile_id):
     profile = profile_by_id(profile_id)
     link = create_link(user_profile, profile)
     share_token = share_token_by_link(link)
@@ -174,8 +174,8 @@ def generate_profile_share_link(request, user_profile, profile_id):
 
 
 @login_user
-def generate_picture_share_link(request, user_profile, pic_id):
-    picture = picture_by_id(pic_id)
+def app_generate_picture_share_link(request, user_profile, picture_id):
+    picture = picture_by_id(picture_id)
     link = create_link(user_profile, picture)
     share_token = share_token_by_link(link)
     response_content = {"share_url": f"{config['main_server_url']}/share/{share_token}"}
@@ -183,8 +183,8 @@ def generate_picture_share_link(request, user_profile, pic_id):
 
 
 @login_user
-def last_actions(request, user_profile, number, offset):
-    actions = last_actions_objects(user_profile, number, offset)
+def app_last_actions(request, user_profile, number, offset):
+    actions = last_actions(user_profile, number, offset)
     response_content = [construct_action(user_profile, action) for action in actions]
     return construct_app_response("ok", response_content)
 

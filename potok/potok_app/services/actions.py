@@ -4,7 +4,6 @@ from ..models import Profile, Picture, View, Like, Subscription
 
 
 def add_view(profile: Profile, picture: Picture):
-    picture = Picture.objects.get(id=picture)
     View.objects.create(picture=picture, profile=profile)
 
 
@@ -29,7 +28,7 @@ def switch_subscription(follower: Profile, source: Profile):
         Subscription.objects.create(follower=follower, source=source)
 
 
-def last_actions_objects(profile: Profile, number: int, offset: int):
+def last_actions(profile: Profile, number: int, offset: int):
     likes = Like.objects.filter(picture__profile=profile).order_by('-date')[:offset + number]
     subscriptions = Subscription.objects.filter(source=profile).order_by('-date')[:offset + number]
     actions = list(sorted(chain(likes, subscriptions), key=lambda action: action.date))[offset:offset + number]
