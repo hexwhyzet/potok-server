@@ -6,7 +6,7 @@ from django.http import JsonResponse, HttpResponseNotFound
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
-from potok.potok_app.services.authorizer import login_user, get_device_id, anonymous_user_exist, \
+from .services.authorizer import login_user, get_device_id, anonymous_user_exist, \
     create_anonymous_user, anonymous_user_by_device_id
 from .config import Secrets, Config
 from .importer import pics_json_parser, profiles_json_parser, pic_upload

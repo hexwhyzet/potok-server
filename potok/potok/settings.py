@@ -33,7 +33,6 @@ ALLOWED_HOSTS = [config["main_server_ip"], config["grabber_server_url"]]
 # Application definition
 
 INSTALLED_APPS = [
-    'potok_app.apps.PotokAppConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -41,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_rename_app',
+    'potok_app.apps.PotokAppConfig'
 ]
 
 MIDDLEWARE = [

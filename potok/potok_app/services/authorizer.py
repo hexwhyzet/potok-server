@@ -1,7 +1,7 @@
 from random import randint
 
-from potok.potok_app.functions import id_gen
-from potok.potok_app.models import CustomAnonymousUser, Profile, CustomUser
+from ..functions import id_gen
+from ..models import CustomAnonymousUser, Profile, CustomUser
 
 
 def get_device_id(request):
