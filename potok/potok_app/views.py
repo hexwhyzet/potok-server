@@ -190,7 +190,7 @@ def app_last_actions(request, user_profile, number, offset):
 
 
 @csrf_exempt
-def update_pics_db(request):
+def update_pictures_db(request):
     post_json = request.POST["archive"]
     pics_json_parser(post_json)
     return construct_app_response("ok", None)

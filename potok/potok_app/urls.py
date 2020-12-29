@@ -35,8 +35,8 @@ urlpatterns = [
 
     path("auth/device_id", views.log_in_via_device_id),
 
-    path("send_clubs", views.update_profiles_db),
-    path("send_posts", views.update_pics_db),
+    path("send_profiles", views.update_profiles_db),
+    path("send_pictures", views.update_pictures_db),
 
     # path("web/subscription_picture", views.view_subscription_picture),
     # path("web/random_picture", views.view_random_picture),
