@@ -23,6 +23,5 @@ class Config:
     def __getitem__(self, item):
         return self.res[item]
 
-
 # if __name__ == '__main__':
 #     print(Secrets()["django_secret_key"])

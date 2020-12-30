@@ -1,10 +1,7 @@
-import time
 from random import choices
 from string import ascii_lowercase, ascii_uppercase, digits
 
 # from .models import Link
-
-from base64 import urlsafe_b64encode, urlsafe_b64decode
 
 
 def id_gen(length=6):

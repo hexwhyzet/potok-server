@@ -9,8 +9,8 @@ body {
 
 div {
     background-color: black;
-    height: -moz-available;          /* WebKit игнор. */
-    height: -webkit-fill-available;  /* Mozilla игнор. */
+    height: -moz-available; /* WebKit игнор. */
+    height: -webkit-fill-available; /* Mozilla игнор. */
     height: fill-available;
     width: 100vw;
     overflow: hidden;

@@ -79,7 +79,8 @@ class Session(models.Model):
 class Link(models.Model):
     id = models.BigAutoField(primary_key=True)
     sender = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='links_sender', blank=False)
-    receiver = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='links_receiver', blank=True, null=True)
+    receiver = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='links_receiver', blank=True,
+                                 null=True)
     date = models.DateTimeField(auto_now_add=True)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.BigIntegerField(null=True, blank=True)
