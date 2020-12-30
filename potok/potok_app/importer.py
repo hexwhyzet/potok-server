@@ -15,6 +15,17 @@ config = Config()
 
 
 def pics_json_parser(json_pics_data):
+    """
+    Current JSON Structure sent from grabber
+    {
+        'source_picture_id': minor id of picture in database
+        'source_profile_id': minor id of profile in database
+        'size': resolution of picture, example: 1280
+        'date': time in UNIX format
+        'url': url to picture on foreign server
+        'source': example: vk
+    }
+    """
     pics_data = json.loads(json_pics_data)
     for pic_data in pics_data:
         source_url = pic_data['url']
@@ -35,6 +46,17 @@ def pics_json_parser(json_pics_data):
 
 
 def profiles_json_parser(clubs_data):
+    """
+        Current JSON Structure sent from grabber
+        {
+            'source_profile_id': minor id of profile in database
+            'name': not unique name of profile, example: YOUNG BIDLO BOYS
+            'screen name': unique name of profile, example: youngbidlo
+            'avatar_url': url to avatar on foreign server
+            'avatar_size': size of avatar picture, example: 1280
+            'source': example: vk
+        }
+        """
     profiles_data = json.loads(clubs_data)
     for profile_data in profiles_data:
         minor_id = profile_data['source'] + str(abs(int(profile_data['source_profile_id'])))
