@@ -1,4 +1,4 @@
-from ..models import Profile
+from potok_app.models import Profile
 
 
 def profile_by_id(profile_id):

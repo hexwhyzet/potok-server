@@ -1,4 +1,4 @@
-from ..models import Picture, Profile, Session
+from potok_app.models import Picture, Profile, Session
 
 
 def picture_by_id(picture_id):

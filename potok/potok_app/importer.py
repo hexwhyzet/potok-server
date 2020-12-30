@@ -7,8 +7,8 @@ import pytz
 import requests
 from django.contrib.auth.models import User
 
-from .config import Config, Secrets
-from .models import Picture, Profile
+from potok_app.config import Config, Secrets
+from potok_app.models import Picture, Profile
 
 secrets = Secrets()
 config = Config()

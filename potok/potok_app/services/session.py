@@ -1,5 +1,5 @@
-from ..functions import id_gen
-from ..models import Session
+from potok_app.functions import id_gen
+from potok_app.models import Session
 
 
 def session_by_token(token):

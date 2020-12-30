@@ -1,6 +1,6 @@
 from itertools import chain
 
-from ..models import Profile, Picture, View, Like, Subscription
+from potok_app.models import Profile, Picture, View, Like, Subscription
 
 
 def add_view(profile: Profile, picture: Picture):

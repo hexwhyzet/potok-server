@@ -1,7 +1,7 @@
 from django.contrib.contenttypes.models import ContentType
 
-from ..functions import token_from_id, id_from_token
-from ..models import Profile, Link, Picture
+from potok_app.functions import token_from_id, id_from_token
+from potok_app.models import Profile, Link, Picture
 
 
 def create_link(sender: Profile, content):
