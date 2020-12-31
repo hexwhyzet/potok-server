@@ -15,7 +15,7 @@ from potok_app.services.authorizer import login_user, get_device_id, anonymous_u
 from potok_app.services.link import link_by_share_token, create_link, share_token_by_link
 from potok_app.services.picture import subscription_pictures, feed_pictures, profile_pictures, \
     picture_by_id
-from potok_app.services.profile import profile_by_id
+from potok_app.services.profile import profile_by_id, search_profiles_by_screen_name_prefix, search_profiles_by_text
 from potok_app.services.session import create_session, session_by_token
 
 secrets = Secrets()
@@ -70,6 +70,11 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
         "is_yours": profile == user_profile,
     }
     return response_content
+
+
+def construct_profiles(profiles: list[Profile], user_profile: Profile = None):
+    profiles = [construct_profile_response(profile, user_profile) for profile in profiles]
+    return profiles
 
 
 def construct_subscription_response(user_profile, subscription):
@@ -186,6 +191,18 @@ def app_generate_picture_share_link(request, user_profile, picture_id):
 def app_last_actions(request, user_profile, number, offset):
     actions = last_actions(user_profile, number, offset)
     response_content = [construct_action(user_profile, action) for action in actions]
+    return construct_app_response("ok", response_content)
+
+
+def app_autofill(request, search_string, number, offset):
+    profiles = search_profiles_by_screen_name_prefix(search_string, number, offset)
+    response_content = construct_profiles(profiles)
+    return construct_app_response("ok", response_content)
+
+
+def app_search(request, search_string, number, offset):
+    profiles = search_profiles_by_text(search_string, number, offset)
+    response_content = construct_profiles(profiles)
     return construct_app_response("ok", response_content)
 
 

@@ -31,7 +31,8 @@ urlpatterns = [
     path("app/share_profile/<str:profile_id>", views.app_generate_profile_share_link),
     path("app/share_picture/<str:picture_id>", views.app_generate_picture_share_link),
     path("share/<str:share_token>", views.content_by_link),
-    # path("search/<str:search_string>", views.)
+    path("app/autofill/<str:search_string>/<int:number>/<int:offset>", views.app_autofill),
+    path("app/search/<str:search_string>/<int:number>/<int:offset>", views.app_search),
 
     path("auth/device_id", views.log_in_via_device_id),
 
