@@ -158,7 +158,7 @@ def app_switch_like(request, user_profile, picture_id):
 
 @login_user
 def app_switch_subscription(request, user_profile, sub_profile_id):
-    sub_profile = Profile.objects.get(id=sub_profile_id)
+    sub_profile = profile_by_id(profile_id=sub_profile_id)
     switch_subscription(user_profile, sub_profile)
     return construct_app_response("ok", None)
 
