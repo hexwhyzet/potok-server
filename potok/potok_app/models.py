@@ -46,6 +46,15 @@ class Picture(models.Model):
         return picture
 
 
+class Comment(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    picture = models.ForeignKey(Picture, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='comments')
+    text = models.CharField(max_length=10000, blank=False, null=False)
+    date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
+    likes_num = models.IntegerField(default=0)
+
+
 class Like(models.Model):
     picture = models.ForeignKey(Picture, on_delete=models.CASCADE)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
@@ -65,6 +74,12 @@ class Subscription(models.Model):
 
     class Meta:
         unique_together = ('follower', 'source')
+
+
+class CommentLike(models.Model):
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='likes')
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
 
 
 class Session(models.Model):
@@ -97,8 +112,8 @@ class CustomAnonymousUser(User):
         return f"Anonymous {self.device_id}"
 
     class Meta:
-        verbose_name = _("AnonymousUser")
-        verbose_name_plural = _("AnonymousUsers")
+        verbose_name = _("Anonymous user")
+        verbose_name_plural = _("Anonymous users")
 
 
 class CustomUser(User):

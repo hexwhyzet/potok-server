@@ -1,6 +1,6 @@
 from itertools import chain
 
-from potok_app.models import Profile, Picture, View, Like, Subscription
+from potok_app.models import Profile, Picture, View, Like, Subscription, Comment, CommentLike
 
 
 def add_view(profile: Profile, picture: Picture):
@@ -33,3 +33,15 @@ def last_actions(profile: Profile, number: int, offset: int):
     subscriptions = Subscription.objects.filter(source=profile).order_by('-date')[:offset + number]
     actions = list(sorted(chain(likes, subscriptions), key=lambda action: action.date))[offset:offset + number]
     return actions
+
+
+def like_comment(profile: Profile, comment: Comment):
+    CommentLike.objects.create(profile=profile, comment=comment)
+
+
+def add_comment(profile: Profile, picture: Picture, text: str):
+    Comment.objects.create(author=profile, picture=picture, text=text)
+
+
+def comment_by_id(comment_id):
+    return Comment.objects.get(id=comment_id)
