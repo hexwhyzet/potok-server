@@ -9,8 +9,9 @@ from django.utils.translation import ugettext_lazy as _
 class Profile(models.Model):
     id = models.AutoField(primary_key=True)
     minor_id = models.CharField(null=True, default=None, max_length=100, unique=True, blank=True)
-    name = models.CharField(max_length=100, null=True, default=None, blank=True)
-    screen_name = models.CharField(max_length=100, null=True, default=None, unique=True, blank=True)
+    name = models.CharField(max_length=20, null=True, default=None, blank=True)
+    screen_name = models.CharField(max_length=24, null=True, default=None, unique=True, blank=True)
+    description = models.CharField(max_length=80, null=True, default=None, blank=True)
     avatar_url = models.CharField(max_length=100, null=True, default=None, blank=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.CASCADE)
     subs = models.ManyToManyField('self', symmetrical=False, through='Subscription', related_name='followers',
@@ -19,14 +20,16 @@ class Profile(models.Model):
 
 class Picture(models.Model):
     id = models.BigAutoField(primary_key=True)
-    minor_id = models.CharField(null=True, default=None, max_length=100, blank=True)
+    minor_id = models.CharField(max_length=1000, null=True, default=None, blank=True)
+    source_url = models.CharField(max_length=1000, null=True, default=None, blank=True)
     url = models.CharField(max_length=100, default=None, null=True, blank=True)
-    source_url = models.CharField(null=True, default=None, max_length=1000, blank=True)
     res = models.PositiveSmallIntegerField(null=True, default=0, blank=True)
     date = models.DateTimeField(blank=True, null=True)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='pics', blank=True, null=True)
     profiles_liked = models.ManyToManyField(Profile, through='Like', related_name='pics_liked', blank=True)
     profiles_viewed = models.ManyToManyField(Profile, through='View', related_name='pics_viewed', blank=True)
+    link_url = models.CharField(max_length=100, default=None, null=True, blank=True)
+    text = models.CharField(max_length=150, default=None, null=True, blank=True)
 
     views_num = models.PositiveIntegerField(default=0)
     likes_num = models.PositiveIntegerField(default=0)
@@ -50,7 +53,7 @@ class Comment(models.Model):
     id = models.BigAutoField(primary_key=True)
     picture = models.ForeignKey(Picture, on_delete=models.CASCADE, related_name='comments')
     author = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='comments')
-    text = models.CharField(max_length=10000, blank=False, null=False)
+    text = models.CharField(max_length=150, blank=False, null=False)
     date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
     likes_num = models.IntegerField(default=0)
 

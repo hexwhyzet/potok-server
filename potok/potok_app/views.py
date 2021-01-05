@@ -44,7 +44,9 @@ def construct_picture_response(pic: Picture, user_profile: Profile = None):
         "is_liked": pic.profiles_liked.filter(id=user_profile.id).exists() if user_profile is not None else None,
         "like_url": f"{config['main_server_url']}/app/like_picture/{pic.id}",
         "share_url": f"{config['main_server_url']}/app/share_picture/{pic.id}",
-        "profile": construct_profile_response(pic.profile, user_profile)
+        "profile": construct_profile_response(pic.profile, user_profile),
+        "link_url": pic.link_url,
+        "text": pic.text,
     }
     return response_content
 
