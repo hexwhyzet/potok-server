@@ -39,8 +39,4 @@ urlpatterns = [
 
     path("send_profiles", views.update_profiles_db),
     path("send_pictures", views.update_pictures_db),
-
-    # path("web/subscription_picture", views.view_subscription_picture),
-    # path("web/random_picture", views.view_random_picture),
-    # path("mweb/random_picture", views.view_random_picture_mobile),
 ]
