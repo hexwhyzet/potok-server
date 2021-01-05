@@ -52,7 +52,7 @@ class Picture(models.Model):
 class Comment(models.Model):
     id = models.BigAutoField(primary_key=True)
     picture = models.ForeignKey(Picture, on_delete=models.CASCADE, related_name='comments')
-    author = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='comments')
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='comments')
     text = models.CharField(max_length=150, blank=False, null=False)
     date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
     likes_num = models.IntegerField(default=0)

@@ -8,9 +8,9 @@ from django.views.decorators.csrf import csrf_exempt
 
 from potok_app.config import Secrets, Config
 from potok_app.importer import pics_json_parser, profiles_json_parser, pic_upload
-from potok_app.models import Picture, Profile, Like, Subscription
+from potok_app.models import Picture, Profile, Like, Subscription, Comment
 from potok_app.services.actions import switch_like, last_actions, add_view, switch_subscription, comment_by_id, \
-    like_comment, add_comment
+    like_comment, add_comment, comments_of_picture
 from potok_app.services.authorizer import login_user, get_device_id, anonymous_user_exist, \
     create_anonymous_user, anonymous_user_by_device_id
 from potok_app.services.link import link_by_share_token, create_link, share_token_by_link
@@ -62,6 +62,7 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
         "type": "profile",
         "name": profile.name or "unknown",
         "screen_name": profile.screen_name or "unknown",
+        "description": profile.description,
         "subs_num": profile.subs.count() if user_profile is not None else None,
         "followers_num": profile.followers.count(),
         "views_num": profile.pics.aggregate(views_num=Coalesce(Sum('views_num'), 0))['views_num'],
@@ -76,11 +77,11 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
 
 
 def construct_profiles(profiles: list[Profile], user_profile: Profile = None):
-    profiles = [construct_profile_response(profile, user_profile) for profile in profiles]
-    return profiles
+    constructed_profiles = [construct_profile_response(profile, user_profile) for profile in profiles]
+    return constructed_profiles
 
 
-def construct_subscription_response(user_profile, subscription):
+def construct_subscription_response(user_profile: Profile, subscription: Subscription):
     response_content = {
         "type": "subscription",
         "profile": construct_profile_response(subscription.follower, user_profile),
@@ -89,7 +90,7 @@ def construct_subscription_response(user_profile, subscription):
     return response_content
 
 
-def construct_like_response(user_profile, like):
+def construct_like_response(user_profile: Profile, like: Like):
     response_content = {
         "type": "like",
         "profile": construct_profile_response(like.profile, user_profile),
@@ -97,6 +98,24 @@ def construct_like_response(user_profile, like):
         "date": int(like.date.timestamp()),
     }
     return response_content
+
+
+def construct_comment_response(comment: Comment, user_profile: Profile):
+    response_content = {
+        "type": "comment",
+        "profile": construct_profile_response(comment.profile, user_profile),
+        "picture": construct_picture_response(comment.picture, user_profile),
+        "text": comment.text,
+        "like_url": f"{config['main_server_url']}/app/like_comment/{comment.id}",
+        "likes_num": comment.likes_num,
+        "date": int(comment.date.timestamp()),
+    }
+    return response_content
+
+
+def construct_comments(user_profile: Profile, comments: list[Comment]):
+    constructed_comments = [construct_comment_response(comment, user_profile) for comment in comments]
+    return constructed_comments
 
 
 def construct_action(user_profile, action):
@@ -222,6 +241,14 @@ def app_add_comment(request, user_profile, picture_id):
     picture = picture_by_id(picture_id)
     add_comment(profile=user_profile, picture=picture, text=text)
     return construct_app_response("ok", None)
+
+
+@login_user
+def app_picture_pictures(request, user_profile, picture_id, number, offset):
+    picture = picture_by_id(picture_id)
+    comments = comments_of_picture(picture, number, offset)
+    response_content = construct_comment_response(comments, user_profile)
+    return construct_app_response("ok", response_content)
 
 
 @csrf_exempt

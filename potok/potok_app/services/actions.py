@@ -45,3 +45,7 @@ def add_comment(profile: Profile, picture: Picture, text: str):
 
 def comment_by_id(comment_id):
     return Comment.objects.get(id=comment_id)
+
+
+def comments_of_picture(picture: Picture, number: int, offset: int):
+    return Comment.objects.filter(picture=picture)[offset:offset + number]
