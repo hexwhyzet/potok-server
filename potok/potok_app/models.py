@@ -9,9 +9,9 @@ from django.utils.translation import ugettext_lazy as _
 class Profile(models.Model):
     id = models.AutoField(primary_key=True)
     minor_id = models.CharField(null=True, default=None, max_length=100, unique=True, blank=True)
-    name = models.CharField(max_length=20, null=True, default=None, blank=True)
-    screen_name = models.CharField(max_length=24, null=True, default=None, unique=True, blank=True)
-    description = models.CharField(max_length=80, null=True, default=None, blank=True)
+    screen_name = models.CharField(max_length=100, null=True, default=None, unique=True, blank=True)
+    name = models.CharField(max_length=100, null=True, default=None, blank=True)
+    description = models.CharField(max_length=150, null=True, default=None, blank=True)
     avatar_url = models.CharField(max_length=100, null=True, default=None, blank=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.CASCADE)
     subs = models.ManyToManyField('self', symmetrical=False, through='Subscription', related_name='followers',
