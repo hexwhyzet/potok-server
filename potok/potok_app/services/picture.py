@@ -38,3 +38,15 @@ def liked_pictures(profile_id, number=10, offset=0):
     pictures = list(
         map(lambda x: x.picture, Like.objects.filter(profile=profile_id).order_by('-date')[offset:offset + number]))
     return pictures
+
+
+def high_resolution_url(picture: Picture):
+    return picture.picture_data.get(res=1280).url
+
+
+def mid_resolution_url(picture: Picture):
+    return picture.picture_data.get(res=640).url
+
+
+def low_resolution_url(picture: Picture):
+    return picture.picture_data.get(res=320).url

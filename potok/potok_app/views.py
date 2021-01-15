@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
 from potok_app.config import Secrets, Config
-from potok_app.importer import pics_json_parser, profiles_json_parser, pic_upload
+from potok_app.importer import pics_json_parser, profiles_json_parser, add_user_picture
 from potok_app.models import Picture, Profile, Like, Subscription, Comment
 from potok_app.services.actions import switch_like, last_actions, add_view, switch_subscription, comment_by_id, \
     like_comment, add_comment, comments_of_picture
@@ -15,7 +15,7 @@ from potok_app.services.authorizer import login_user, get_device_id, anonymous_u
     create_anonymous_user, anonymous_user_by_device_id
 from potok_app.services.link import link_by_share_token, create_link, share_token_by_link
 from potok_app.services.picture import subscription_pictures, feed_pictures, profile_pictures, \
-    picture_by_id, liked_pictures
+    picture_by_id, liked_pictures, high_resolution_url, mid_resolution_url, low_resolution_url
 from potok_app.services.profile import profile_by_id, search_profiles_by_screen_name_prefix, search_profiles_by_text
 from potok_app.services.session import create_session, session_by_token
 
@@ -35,8 +35,9 @@ def construct_picture_response(pic: Picture, user_profile: Profile = None):
     response_content = {
         "id": pic.id,
         "type": "picture",
-        "url": f"{config['image_server_url']}{pic.url}",
-        "res": pic.res,
+        "low_res_url": config['image_server_url'] + low_resolution_url(pic),
+        "mid_res_url": config['image_server_url'] + mid_resolution_url(pic),
+        "high_res_url": config['image_server_url'] + high_resolution_url(pic),
         "date": pic.date,
         "views_num": pic.views_num,
         "likes_num": pic.likes_num,
@@ -179,9 +180,9 @@ def app_liked_pictures(request, user_profile, profile_id, number=10, offset=0):
 
 @csrf_exempt
 @login_user
-def app_upload_picture(request, user_profile):
+def app_add_user_picture(request, user_profile):
     picture_data = base64.b64decode(request.POST["picture"])
-    pic_upload(picture_data, user_profile, request.POST["extension"])
+    add_user_picture(picture_data, user_profile, request.POST["extension"])
     return construct_app_response("ok", None)
 
 

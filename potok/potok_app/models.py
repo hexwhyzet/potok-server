@@ -25,8 +25,6 @@ class Picture(models.Model):
     id = models.BigAutoField(primary_key=True)
     minor_id = models.CharField(max_length=1000, null=True, default=None, blank=True)
     source_url = models.CharField(max_length=1000, null=True, default=None, blank=True)
-    url = models.CharField(max_length=100, default=None, null=True, blank=True)
-    res = models.PositiveSmallIntegerField(null=True, default=0, blank=True)
     date = models.DateTimeField(blank=True, null=True)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='pics', blank=True, null=True)
     profiles_liked = models.ManyToManyField(Profile, through='Like', related_name='pics_liked', blank=True)
@@ -39,17 +37,21 @@ class Picture(models.Model):
     shares_num = models.PositiveIntegerField(default=0)
 
     @classmethod
-    def create(cls, profile, url=None, source_url=None, minor_id=None, res=None, date=None):
+    def create(cls, profile, source_url=None, minor_id=None, date=None):
         picture = cls(
             profile=profile,
-            minor_id=minor_id,
-            url=url,
             source_url=source_url,
-            res=res,
+            minor_id=minor_id,
             date=date,
         )
         picture.save()
         return picture
+
+
+class PictureData(models.Model):
+    picture = models.ForeignKey(Picture, on_delete=models.CASCADE, related_name='picture_data')
+    url = models.CharField(max_length=100, default=None, null=True, blank=True)
+    res = models.PositiveSmallIntegerField()
 
 
 class Comment(models.Model):

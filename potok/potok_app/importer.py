@@ -8,7 +8,9 @@ import requests
 from django.contrib.auth.models import User
 
 from potok_app.config import Config, Secrets
-from potok_app.models import Picture, Profile
+from potok_app.functions import id_gen
+from potok_app.models import Picture, Profile, PictureData
+from potok_app.picture_resizer import resize_and_compress
 
 secrets = Secrets()
 config = Config()
@@ -38,11 +40,10 @@ def pics_json_parser(json_pics_data):
             pic = Picture.create(profile=pic_profile,
                                  source_url=source_url,
                                  minor_id=pic_minor_id,
-                                 res=pic_data['size'],
                                  date=datetime.fromtimestamp(pic_data['date'], pytz.timezone("UTC")))
-            pic_url = upload_picture_to_bucket(requests.get(source_url).content, f"{pic.profile.id}/{pic.id}.jpg")
-            pic.url = pic_url
-            pic.save()
+
+            extension = source_url.split(".")[-1].split("?")[0]
+            resize_and_upload_picture_to_storage(requests.get(source_url).content, pic, extension)
 
 
 def profiles_json_parser(clubs_data):
@@ -71,12 +72,19 @@ def profiles_json_parser(clubs_data):
         profile.save()
 
 
-def pic_upload(picture_data, profile, extension):
+def add_user_picture(picture_data, profile, extension):
     picture = Picture.create(profile=profile,
                              date=datetime.fromtimestamp(datetime.now().timestamp(), pytz.timezone("UTC")))
-    picture_url = upload_picture_to_bucket(picture_data, f"{profile.id}/{picture.id}.{extension}")
-    picture.url = picture_url
-    picture.save()
+    resize_and_upload_picture_to_storage(picture_data, picture, extension)
+
+
+def resize_and_upload_picture_to_storage(picture_data, picture, extension):
+    resized_pictures = resize_and_compress(picture_data, extension)
+    for res, resized_picture in resized_pictures.items():
+        url = upload_picture_to_bucket(resized_picture, config["image_server_directory"] + "/" + id_gen(50))
+        picture_data, _ = PictureData.objects.get_or_create(picture=picture, res=res)
+        picture_data.url = url
+        picture_data.save()
 
 
 def upload_picture_to_bucket(picture_data, bucket_path):
