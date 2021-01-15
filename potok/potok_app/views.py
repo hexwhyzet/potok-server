@@ -15,7 +15,7 @@ from potok_app.services.authorizer import login_user, get_device_id, anonymous_u
     create_anonymous_user, anonymous_user_by_device_id
 from potok_app.services.link import link_by_share_token, create_link, share_token_by_link
 from potok_app.services.picture import subscription_pictures, feed_pictures, profile_pictures, \
-    picture_by_id
+    picture_by_id, liked_pictures
 from potok_app.services.profile import profile_by_id, search_profiles_by_screen_name_prefix, search_profiles_by_text
 from potok_app.services.session import create_session, session_by_token
 
@@ -60,6 +60,8 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
     response_content = {
         "id": profile.id,
         "type": "profile",
+        "is_public": profile.is_public,
+        "are_liked_pictures_public": profile.are_liked_pictures_public,
         "name": profile.name or "unknown",
         "screen_name": profile.screen_name or "unknown",
         "description": profile.description,
@@ -68,7 +70,7 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
         "views_num": profile.pics.aggregate(views_num=Coalesce(Sum('views_num'), 0))['views_num'],
         "likes_num": profile.pics.aggregate(likes_num=Coalesce(Sum('likes_num'), 0))['likes_num'],
         "avatar_url": f"{config['image_server_url']}{profile.avatar_url or '/defaults/avatar.png'}",
-        "is_subscribed": user_profile.subs.filter(id=profile.id).exists() if user_profile is not None else None,
+        "is_subscribed": user_profile.subs.filter(id=profile.id).exists() if user_profile is not None else False,
         "subscribe_url": f"{config['main_server_url']}/app/subscribe/{profile.id}",
         "share_url": f"{config['main_server_url']}/app/share_profile/{profile.id}",
         "is_yours": profile == user_profile,
@@ -163,6 +165,18 @@ def app_profile_pictures(request, user_profile, profile_id, number=10, offset=0)
     return construct_app_response("ok", response_content)
 
 
+@login_user
+def app_liked_pictures(request, user_profile, profile_id, number=10, offset=0):
+    profile = profile_by_id(profile_id)
+    if (profile == user_profile) or \
+            (profile.are_liked_videos_public and (profile.is_public or are_fiends(profile, user_profile))):
+        pictures = liked_pictures(profile_id, number, offset)
+        response_content = construct_pictures(pictures, user_profile)
+        return construct_app_response("ok", response_content)
+    else:
+        return construct_app_response("liked pictures are private", None)
+
+
 @csrf_exempt
 @login_user
 def app_upload_picture(request, user_profile):
@@ -216,15 +230,17 @@ def app_last_actions(request, user_profile, number, offset):
     return construct_app_response("ok", response_content)
 
 
-def app_autofill(request, search_string, number, offset):
+@login_user
+def app_autofill(request, user_profile, search_string, number, offset):
     profiles = search_profiles_by_screen_name_prefix(search_string, number, offset)
-    response_content = construct_profiles(profiles)
+    response_content = construct_profiles(profiles, user_profile)
     return construct_app_response("ok", response_content)
 
 
-def app_search(request, search_string, number, offset):
+@login_user
+def app_search(request, user_profile, search_string, number, offset):
     profiles = search_profiles_by_text(search_string, number, offset)
-    response_content = construct_profiles(profiles)
+    response_content = construct_profiles(profiles, user_profile)
     return construct_app_response("ok", response_content)
 
 

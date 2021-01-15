@@ -29,7 +29,7 @@ SECRET_KEY = secrets["django_secret_key"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [config["main_server_ip"], config["grabber_server_url"]]
+ALLOWED_HOSTS = [config["main_server_ip"], config["grabber_server_url"], "127.0.0.1"]
 
 # Application definition
 
@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_rename_app',
-    'potok_app.apps.PotokAppConfig'
+    'potok_app.apps.PotokAppConfig',
+    'oauth2_provider',
 ]
 
 MIDDLEWARE = [
@@ -77,23 +78,23 @@ WSGI_APPLICATION = 'potok.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': config['database_name'],
-        'USER': config['database_user'],
-        'PASSWORD': secrets['database_password'],
-        'HOST': config['database_local_url'],
-        'PORT': '',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': config['database_name'],
+#         'USER': config['database_user'],
+#         'PASSWORD': secrets['database_password'],
+#         'HOST': config['database_local_url'],
+#         'PORT': '',
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -136,6 +137,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'potok_app/static')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 MEDIA_URL = '/media/'
+
+LOGIN_URL='/admin/login/'
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 

@@ -17,6 +17,9 @@ class Profile(models.Model):
     subs = models.ManyToManyField('self', symmetrical=False, through='Subscription', related_name='followers',
                                   blank=True)
 
+    is_public = models.BooleanField(default=True)
+    are_liked_pictures_public = models.BooleanField(default=False)
+
 
 class Picture(models.Model):
     id = models.BigAutoField(primary_key=True)

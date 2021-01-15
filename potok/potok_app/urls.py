@@ -22,6 +22,7 @@ urlpatterns = [
     path("app/subscription_pictures/<str:session_token>/<int:number>", views.app_subscription_pictures),
     path("app/feed_pictures/<str:session_token>/<int:number>", views.app_feed_pictures),
     path("app/profile_pictures/<int:profile_id>/<int:number>/<int:offset>", views.app_profile_pictures),
+    path("app/liked_pictures/<int:profile_id>/<int:number>/<int:offset>", views.app_liked_pictures),
     path("app/like_picture/<int:picture_id>", views.app_switch_like),
     path("app/subscribe/<int:sub_profile_id>", views.app_switch_subscription),
     path("app/create_session", views.app_create_session_request),

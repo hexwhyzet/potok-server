@@ -22,6 +22,7 @@ from . import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     path('', include('potok_app.urls')),
 ]
 

@@ -20,3 +20,7 @@ def search_profiles_by_screen_name_prefix(prefix, number, offset):
 def search_profiles_by_text(text, number, offset):
     return Profile.objects.annotate(similarity=TrigramSimilarity('screen_name', text)) \
                .filter(similarity__gt=0.25).order_by('-similarity')[offset:offset + number]
+
+
+def are_friends(profile1: Profile, profile2: Profile):
+    return profile1 in profile2.subs and profile2 in profile1.subs
