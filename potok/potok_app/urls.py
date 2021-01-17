@@ -26,7 +26,7 @@ urlpatterns = [
     path("app/like_picture/<int:picture_id>", views.app_switch_like),
     path("app/subscribe/<int:sub_profile_id>", views.app_switch_subscription),
     path("app/create_session", views.app_create_session_request),
-    path("app/upload_picture", views.app_add_user_picture),
+    path("app/upload_picture", views.app_add_picture),
     path("app/mark_as_seen/<int:picture_id>", views.app_add_view),
     path("app/last_actions/<int:number>/<int:offset>", views.app_last_actions),
     path("app/share_profile/<str:profile_id>", views.app_generate_profile_share_link),

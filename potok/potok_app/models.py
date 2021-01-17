@@ -12,13 +12,25 @@ class Profile(models.Model):
     screen_name = models.CharField(max_length=100, null=True, default=None, unique=True, blank=True)
     name = models.CharField(max_length=100, null=True, default=None, blank=True)
     description = models.CharField(max_length=150, null=True, default=None, blank=True)
-    avatar_url = models.CharField(max_length=100, null=True, default=None, blank=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.CASCADE)
     subs = models.ManyToManyField('self', symmetrical=False, through='Subscription', related_name='followers',
                                   blank=True)
 
     is_public = models.BooleanField(default=True)
     are_liked_pictures_public = models.BooleanField(default=False)
+
+
+class Avatar(models.Model):
+    id = models.AutoField(primary_key=True)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='avatars')
+    source_url = models.CharField(max_length=1000, null=True, default=None, blank=True)
+    date = models.DateTimeField(blank=True, null=True, auto_now_add=True)
+
+
+class AvatarData(models.Model):
+    avatar = models.ForeignKey(Avatar, on_delete=models.CASCADE, related_name='avatar_data')
+    url = models.CharField(max_length=100, default=None, null=True, blank=True)
+    res = models.PositiveSmallIntegerField()
 
 
 class Picture(models.Model):

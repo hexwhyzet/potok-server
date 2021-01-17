@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
 from potok_app.config import Secrets, Config
-from potok_app.importer import pics_json_parser, profiles_json_parser, add_user_picture
+from potok_app.importer import pics_json_parser, profiles_json_parser
 from potok_app.models import Picture, Profile, Like, Subscription, Comment
 from potok_app.services.actions import switch_like, last_actions, add_view, switch_subscription, comment_by_id, \
     like_comment, add_comment, comments_of_picture
@@ -15,8 +15,9 @@ from potok_app.services.authorizer import login_user, get_device_id, anonymous_u
     create_anonymous_user, anonymous_user_by_device_id
 from potok_app.services.link import link_by_share_token, create_link, share_token_by_link
 from potok_app.services.picture import subscription_pictures, feed_pictures, profile_pictures, \
-    picture_by_id, liked_pictures, high_resolution_url, mid_resolution_url, low_resolution_url
-from potok_app.services.profile import profile_by_id, search_profiles_by_screen_name_prefix, search_profiles_by_text
+    picture_by_id, liked_pictures, high_resolution_url, mid_resolution_url, low_resolution_url, add_picture
+from potok_app.services.profile import profile_by_id, search_profiles_by_screen_name_prefix, search_profiles_by_text, \
+    avatar_url
 from potok_app.services.session import create_session, session_by_token
 
 secrets = Secrets()
@@ -35,9 +36,9 @@ def construct_picture_response(pic: Picture, user_profile: Profile = None):
     response_content = {
         "id": pic.id,
         "type": "picture",
-        "low_res_url": config['image_server_url'] + low_resolution_url(pic),
-        "mid_res_url": config['image_server_url'] + mid_resolution_url(pic),
-        "high_res_url": config['image_server_url'] + high_resolution_url(pic),
+        "low_res_url": f"{config['image_server_url']}/{config['image_server_bucket']}{low_resolution_url(pic)}",
+        "mid_res_url": f"{config['image_server_url']}/{config['image_server_bucket']}{mid_resolution_url(pic)}",
+        "high_res_url": f"{config['image_server_url']}/{config['image_server_bucket']}{high_resolution_url(pic)}",
         "date": pic.date,
         "views_num": pic.views_num,
         "likes_num": pic.likes_num,
@@ -70,7 +71,7 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
         "followers_num": profile.followers.count(),
         "views_num": profile.pics.aggregate(views_num=Coalesce(Sum('views_num'), 0))['views_num'],
         "likes_num": profile.pics.aggregate(likes_num=Coalesce(Sum('likes_num'), 0))['likes_num'],
-        "avatar_url": f"{config['image_server_url']}{profile.avatar_url or '/defaults/avatar.png'}",
+        "avatar_url": f"{config['image_server_url']}/{config['image_server_bucket']}{avatar_url(profile) or '/defaults/avatar.png'}",
         "is_subscribed": user_profile.subs.filter(id=profile.id).exists() if user_profile is not None else False,
         "subscribe_url": f"{config['main_server_url']}/app/subscribe/{profile.id}",
         "share_url": f"{config['main_server_url']}/app/share_profile/{profile.id}",
@@ -180,9 +181,9 @@ def app_liked_pictures(request, user_profile, profile_id, number=10, offset=0):
 
 @csrf_exempt
 @login_user
-def app_add_user_picture(request, user_profile):
+def app_add_picture(request, user_profile):
     picture_data = base64.b64decode(request.POST["picture"])
-    add_user_picture(picture_data, user_profile, request.POST["extension"])
+    add_picture(user_profile, picture_data, request.POST["extension"])
     return construct_app_response("ok", None)
 
 

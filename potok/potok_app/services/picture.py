@@ -1,4 +1,15 @@
-from potok_app.models import Picture, Profile, Session, Like
+from datetime import datetime
+
+import pytz
+
+from potok_app.config import Secrets, Config
+from potok_app.functions import id_gen
+from potok_app.models import Picture, Profile, Session, Like, PictureData
+from potok_app.object_storage_api import upload_picture
+from potok_app.picture_resizer import resize_and_compress
+
+secrets = Secrets()
+config = Config()
 
 
 def picture_by_id(picture_id):
@@ -38,6 +49,21 @@ def liked_pictures(profile_id, number=10, offset=0):
     pictures = list(
         map(lambda x: x.picture, Like.objects.filter(profile=profile_id).order_by('-date')[offset:offset + number]))
     return pictures
+
+
+def add_picture(profile, picture_data, extension):
+    picture = Picture.create(profile=profile,
+                             date=datetime.fromtimestamp(datetime.now().timestamp(), pytz.timezone("UTC")))
+    resize_and_upload_picture_to_storage(
+        picture=picture,
+        raw_picture_data=picture_data,
+        extension=extension)
+
+
+def resize_and_upload_picture_to_storage(picture, raw_picture_data, extension):
+    for res, resized_picture in resize_and_compress(raw_picture_data, extension).items():
+        url = upload_picture(resized_picture, f'{config["image_server_directory"]}/{id_gen(50)}.{extension}')
+        picture_data, _ = PictureData.objects.get_or_create(picture=picture, res=res, url=url)
 
 
 def high_resolution_url(picture: Picture):

@@ -34,6 +34,10 @@ def id_from_token(s):
     return n
 
 
+def extension_from_url(url):
+    return url.split(".")[-1].split("?")[0]
+
+
 if __name__ == '__main__':
     pass
     # token = 'a'
