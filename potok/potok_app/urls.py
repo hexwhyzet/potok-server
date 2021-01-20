@@ -33,9 +33,9 @@ urlpatterns = [
     path("app/share_picture/<str:picture_id>", views.app_generate_picture_share_link),
     path("app/autofill/<str:search_string>/<int:number>/<int:offset>", views.app_autofill),
     path("app/search/<str:search_string>/<int:number>/<int:offset>", views.app_search),
-    path("app/like_comment/<int:commend_id>", views.app_like_comment),
+    path("app/picture_comments/<int:picture_id>/<int:number>/<int:offset>", views.app_picture_comments),
+    path("app/like_comment/<int:comment_id>", views.app_like_comment),
     path("app/add_comment/<int:picture_id>", views.app_add_comment),
-    path("app/picture_comments/<int:picture_id>/<int:number>/<int:offset>", views.app_picture_pictures),
 
     path("share/<str:share_token>", views.content_by_link),
 

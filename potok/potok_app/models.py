@@ -72,6 +72,7 @@ class Comment(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='comments')
     text = models.CharField(max_length=150, blank=False, null=False)
     date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
+    profiles_liked = models.ManyToManyField(Profile, through='CommentLike', related_name='comments_liked', blank=True)
     likes_num = models.IntegerField(default=0)
 
 
