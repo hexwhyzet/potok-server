@@ -31,7 +31,7 @@ def switch_subscription(follower: Profile, source: Profile):
 def last_actions(profile: Profile, number: int, offset: int):
     likes = Like.objects.filter(picture__profile=profile).order_by('-date')[:offset + number]
     subscriptions = Subscription.objects.filter(source=profile).order_by('-date')[:offset + number]
-    actions = list(sorted(chain(likes, subscriptions), key=lambda action: action.date))[offset:offset + number]
+    actions = list(sorted(chain(likes, subscriptions), key=lambda action: action.date, reverse=True))[offset:offset + number]
     return actions
 
 

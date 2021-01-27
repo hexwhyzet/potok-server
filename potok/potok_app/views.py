@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from potok_app.config import Secrets, Config
 from potok_app.importer import pics_json_parser, profiles_json_parser
-from potok_app.models import Picture, Profile, Like, Subscription, Comment, CommentLike
+from potok_app.models import Picture, Profile, Like, Subscription, Comment, CommentLike, ProfileSuggestion
 from potok_app.services.actions import switch_like, last_actions, add_view, switch_subscription, comment_by_id, \
     like_comment, add_comment, comments_of_picture
 from potok_app.services.authorizer import login_user, get_device_id, anonymous_user_exist, \
@@ -407,7 +407,15 @@ def app_picture_comments(request, user_profile, picture_id, number, offset):
 
     return construct_app_response("ok", test_answer)
 
-    return construct_app_response("ok", response_content)
+    # return construct_app_response("ok", response_content)
+
+
+@csrf_exempt
+@login_user
+def app_suggest_profile(request, user_profile):
+    content = request.POST["content"]
+    ProfileSuggestion.objects.create(profile=user_profile, content=content)
+    return construct_app_response("ok", None)
 
 
 @csrf_exempt

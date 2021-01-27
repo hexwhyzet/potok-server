@@ -36,6 +36,7 @@ urlpatterns = [
     path("app/picture_comments/<int:picture_id>/<int:number>/<int:offset>", views.app_picture_comments),
     path("app/like_comment/<int:comment_id>", views.app_like_comment),
     path("app/add_comment/<int:picture_id>", views.app_add_comment),
+    path("app/suggest_profile", views.app_suggest_profile),
 
     path("share/<str:share_token>", views.content_by_link),
 

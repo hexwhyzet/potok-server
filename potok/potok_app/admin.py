@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from potok_app.models import Profile, Picture, Session, Like, Subscription, View, CustomAnonymousUser, CustomUser, Link, \
-    Comment, CommentLike, PictureData, Avatar, AvatarData
+    Comment, CommentLike, PictureData, Avatar, AvatarData, ProfileSuggestion
 
 # Register your models here.
 
@@ -19,3 +19,4 @@ admin.site.register(Comment)
 admin.site.register(CommentLike)
 admin.site.register(Avatar)
 admin.site.register(AvatarData)
+admin.site.register(ProfileSuggestion)

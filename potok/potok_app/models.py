@@ -123,6 +123,11 @@ class Link(models.Model):
     content = GenericForeignKey('content_type', 'object_id')
 
 
+class ProfileSuggestion(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    content = models.CharField(max_length=1000, null=True, blank=True)
+
+
 class CustomAnonymousUser(User):
     activation_token = models.CharField(max_length=100, null=True, blank=True)
     device_id = models.CharField(max_length=100, null=True, blank=True)
