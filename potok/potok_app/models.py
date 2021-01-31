@@ -49,11 +49,12 @@ class Picture(models.Model):
     shares_num = models.PositiveIntegerField(default=0)
 
     @classmethod
-    def create(cls, profile, source_url=None, minor_id=None, date=None):
+    def create(cls, profile, link_url=None, source_url=None, minor_id=None, date=None):
         picture = cls(
             profile=profile,
             source_url=source_url,
             minor_id=minor_id,
+            link_url=link_url,
             date=date,
         )
         picture.save()

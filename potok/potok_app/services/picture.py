@@ -51,8 +51,9 @@ def liked_pictures(profile_id, number=10, offset=0):
     return pictures
 
 
-def add_picture(profile, picture_data, extension):
+def add_picture(profile, picture_data, extension, link):
     picture = Picture.create(profile=profile,
+                             link_url=link,
                              date=datetime.fromtimestamp(datetime.now().timestamp(), pytz.timezone("UTC")))
     resize_and_upload_picture_to_storage(
         picture=picture,

@@ -1,5 +1,7 @@
 import base64
 
+from django.core.exceptions import ValidationError
+from django.core.validators import URLValidator
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse, HttpResponseNotFound
@@ -187,7 +189,13 @@ def app_liked_pictures(request, user_profile, profile_id, number=10, offset=0):
 @login_user
 def app_add_picture(request, user_profile):
     picture_data = base64.b64decode(request.POST["picture"])
-    add_picture(user_profile, picture_data, request.POST["extension"])
+    link = request.POST["link"]
+    validator = URLValidator()
+    try:
+        validator(link)
+    except ValidationError:
+        return construct_app_response("error", "Url is invalid")
+    add_picture(user_profile, picture_data, request.POST["extension"], link)
     return construct_app_response("ok", None)
 
 
