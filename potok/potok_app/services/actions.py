@@ -14,7 +14,7 @@ def does_exist_unseen_subscription_picture(profile: Profile):
 def switch_like(profile: Profile, picture: Picture):
     if Like.objects.filter(picture=picture, profile=profile).exists():
         Like.objects.get(picture=picture, profile=profile).delete()
-        picture.likes_num -= max(0, picture.likes_num - 1)
+        picture.likes_num = max(0, picture.likes_num - 1)
     else:
         Like.objects.create(picture=picture, profile=profile)
         picture.likes_num += 1
