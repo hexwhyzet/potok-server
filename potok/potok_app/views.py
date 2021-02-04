@@ -1,7 +1,5 @@
 import base64
 
-from django.core.exceptions import ValidationError
-from django.core.validators import URLValidator
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse, HttpResponseNotFound
@@ -9,21 +7,26 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
 from potok_app.config import Secrets, Config
+from potok_app.functions import is_valid_url
 from potok_app.importer import pics_json_parser, profiles_json_parser
 from potok_app.models import Picture, Profile, Like, Subscription, Comment, CommentLike, ProfileSuggestion
 from potok_app.services.actions import switch_like, last_actions, add_view, switch_subscription, comment_by_id, \
-    add_comment, comments_of_picture, switch_like_comment
+    add_comment, comments_of_picture, switch_like_comment, comment_can_be_deleted_by_user, delete_comment
 from potok_app.services.authorizer import login_user, get_device_id, anonymous_user_exist, \
     create_anonymous_user, anonymous_user_by_device_id
 from potok_app.services.link import link_by_share_token, create_link, share_token_by_link
 from potok_app.services.picture import subscription_pictures, feed_pictures, profile_pictures, \
-    picture_by_id, liked_pictures, high_resolution_url, mid_resolution_url, low_resolution_url, add_picture
+    picture_by_id, liked_pictures, high_resolution_url, mid_resolution_url, low_resolution_url, add_picture, \
+    picture_can_be_deleted_by_user, delete_picture
 from potok_app.services.profile import profile_by_id, search_profiles_by_screen_name_prefix, search_profiles_by_text, \
     avatar_url
 from potok_app.services.session import create_session, session_by_token
 
 secrets = Secrets()
 config = Config()
+
+
+# logger = logging.getLogger(__name__)
 
 
 def construct_app_response(status, content):
@@ -52,6 +55,8 @@ def construct_picture_response(pic: Picture, user_profile: Profile = None):
         "add_comment_url": f"{config['main_server_url']}/app/add_comment/{pic.id}",
         "profile": construct_profile_response(pic.profile, user_profile),
         "link_url": pic.link_url,
+        "delete_url": f"{config['main_server_url']}/app/delete_picture/{pic.id}",
+        "can_be_deleted": picture_can_be_deleted_by_user(user_profile, pic),
         "text": pic.text,
     }
     return response_content
@@ -111,6 +116,7 @@ def construct_like_response(user_profile: Profile, like: Like):
 def construct_comment_response(comment: Comment, user_profile: Profile):
     response_content = {
         "type": "comment",
+        "id": comment.id,
         "profile": construct_profile_response(comment.profile, user_profile),
         "picture": construct_picture_response(comment.picture, user_profile),
         "text": comment.text,
@@ -119,6 +125,8 @@ def construct_comment_response(comment: Comment, user_profile: Profile):
         "is_liked": CommentLike.objects.filter(profile=user_profile, comment=comment).exists(),
         "is_liked_by_creator": CommentLike.objects.filter(profile=comment.profile, comment=comment).exists(),
         "date": int(comment.date.timestamp()),
+        "can_be_deleted": comment_can_be_deleted_by_user(user_profile, comment),
+        "delete_url": f"{config['main_server_url']}/app/delete_comment/{comment.id}",
     }
     return response_content
 
@@ -190,11 +198,11 @@ def app_liked_pictures(request, user_profile, profile_id, number=10, offset=0):
 def app_add_picture(request, user_profile):
     picture_data = base64.b64decode(request.POST["picture"])
     link = request.POST["link"]
-    validator = URLValidator()
-    try:
-        validator(link)
-    except ValidationError:
-        return construct_app_response("error", "Url is invalid")
+    if len(link.strip()) != 0:
+        if not (is_valid_url(link)):
+            return construct_app_response("error", "Url is invalid")
+    else:
+        link = None
     add_picture(user_profile, picture_data, request.POST["extension"], link)
     return construct_app_response("ok", None)
 
@@ -204,6 +212,16 @@ def app_switch_like(request, user_profile, picture_id):
     picture = picture_by_id(picture_id)
     switch_like(user_profile, picture)
     return construct_app_response("ok", None)
+
+
+@login_user
+def app_delete_picture(request, user_profile, picture_id):
+    picture = picture_by_id(picture_id)
+    if picture_can_be_deleted_by_user(user_profile, picture):
+        delete_picture(picture)
+        return construct_app_response("ok", None)
+
+    return construct_app_response("Picture can't be deleted", None)
 
 
 @login_user
@@ -275,156 +293,33 @@ def app_add_comment(request, user_profile, picture_id):
 
 
 @login_user
+def app_delete_comment(request, user_profile, comment_id):
+    comment = comment_by_id(comment_id)
+    if comment_can_be_deleted_by_user(user_profile, comment):
+        delete_comment(comment)
+        return construct_app_response("ok", None)
+
+    return construct_app_response("Comment can't be deleted", None)
+
+
+@login_user
 def app_picture_comments(request, user_profile, picture_id, number, offset):
     picture = picture_by_id(picture_id)
     comments = comments_of_picture(picture, number, offset)
+    comments = list(sorted(sorted(comments, key=lambda comment: comment.likes_num, reverse=True),
+                           key=lambda comment: comment.profile == user_profile, reverse=True))
     response_content = construct_comments(user_profile, comments)
-
-    # test_answer = [
-    #     {
-    #         "type": "comment",
-    #         "profile": construct_profile_response(picture.profile, user_profile),
-    #         "picture": construct_picture_response(picture, user_profile),
-    #         "text": "Лучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФ",
-    #         "like_url": f"{config['main_server_url']}/app/like_comment/1",
-    #         "is_liked": True,
-    #         "is_liked_by_creator": True,
-    #         "likes_num": 5,
-    #         "date": int(picture.date.timestamp()),
-    #     },
-    #     {
-    #         "type": "comment",
-    #         "profile": construct_profile_response(picture.profile, user_profile),
-    #         "picture": construct_picture_response(picture, user_profile),
-    #         "text": "Согласен!",
-    #         "like_url": f"{config['main_server_url']}/app/like_comment/1",
-    #         "likes_num": 2,
-    #         "is_liked": False,
-    #         "is_liked_by_creator": True,
-    #         "date": int(picture.date.timestamp()),
-    #     },
-    #     {
-    #         "type": "comment",
-    #         "profile": construct_profile_response(picture.profile, user_profile),
-    #         "picture": construct_picture_response(picture, user_profile),
-    #         "text": "Пикча норм, но паблик говно!",
-    #         "like_url": f"{config['main_server_url']}/app/like_comment/1",
-    #         "likes_num": 100,
-    #         "is_liked": False,
-    #         "is_liked_by_creator": False,
-    #         "date": int(picture.date.timestamp()),
-    #     },
-    #     {
-    #         "type": "comment",
-    #         "profile": construct_profile_response(picture.profile, user_profile),
-    #         "picture": construct_picture_response(picture, user_profile),
-    #         "text": "Лучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФ",
-    #         "like_url": f"{config['main_server_url']}/app/like_comment/1",
-    #         "is_liked": True,
-    #         "is_liked_by_creator": True,
-    #         "likes_num": 5,
-    #         "date": int(picture.date.timestamp()),
-    #     },
-    #     {
-    #         "type": "comment",
-    #         "profile": construct_profile_response(picture.profile, user_profile),
-    #         "picture": construct_picture_response(picture, user_profile),
-    #         "text": "Согласен!",
-    #         "like_url": f"{config['main_server_url']}/app/like_comment/1",
-    #         "likes_num": 2,
-    #         "is_liked": False,
-    #         "is_liked_by_creator": True,
-    #         "date": int(picture.date.timestamp()),
-    #     },
-    #     {
-    #         "type": "comment",
-    #         "profile": construct_profile_response(picture.profile, user_profile),
-    #         "picture": construct_picture_response(picture, user_profile),
-    #         "text": "Пикча норм, но паблик говно!",
-    #         "like_url": f"{config['main_server_url']}/app/like_comment/1",
-    #         "likes_num": 100,
-    #         "is_liked": False,
-    #         "is_liked_by_creator": False,
-    #         "date": int(picture.date.timestamp()),
-    #     },
-    #     {
-    #         "type": "comment",
-    #         "profile": construct_profile_response(picture.profile, user_profile),
-    #         "picture": construct_picture_response(picture, user_profile),
-    #         "text": "Лучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФ",
-    #         "like_url": f"{config['main_server_url']}/app/like_comment/1",
-    #         "is_liked": True,
-    #         "is_liked_by_creator": True,
-    #         "likes_num": 5,
-    #         "date": int(picture.date.timestamp()),
-    #     },
-    #     {
-    #         "type": "comment",
-    #         "profile": construct_profile_response(picture.profile, user_profile),
-    #         "picture": construct_picture_response(picture, user_profile),
-    #         "text": "Согласен!",
-    #         "like_url": f"{config['main_server_url']}/app/like_comment/1",
-    #         "likes_num": 2,
-    #         "is_liked": False,
-    #         "is_liked_by_creator": True,
-    #         "date": int(picture.date.timestamp()),
-    #     },
-    #     {
-    #         "type": "comment",
-    #         "profile": construct_profile_response(picture.profile, user_profile),
-    #         "picture": construct_picture_response(picture, user_profile),
-    #         "text": "Пикча норм, но паблик говно!",
-    #         "like_url": f"{config['main_server_url']}/app/like_comment/1",
-    #         "likes_num": 100,
-    #         "is_liked": False,
-    #         "is_liked_by_creator": False,
-    #         "date": int(picture.date.timestamp()),
-    #     },
-    #     {
-    #         "type": "comment",
-    #         "profile": construct_profile_response(picture.profile, user_profile),
-    #         "picture": construct_picture_response(picture, user_profile),
-    #         "text": "Лучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФЛучший паблик эвер АУФ",
-    #         "like_url": f"{config['main_server_url']}/app/like_comment/1",
-    #         "is_liked": True,
-    #         "is_liked_by_creator": True,
-    #         "likes_num": 5,
-    #         "date": int(picture.date.timestamp()),
-    #     },
-    #     {
-    #         "type": "comment",
-    #         "profile": construct_profile_response(picture.profile, user_profile),
-    #         "picture": construct_picture_response(picture, user_profile),
-    #         "text": "Согласен!",
-    #         "like_url": f"{config['main_server_url']}/app/like_comment/1",
-    #         "likes_num": 2,
-    #         "is_liked": False,
-    #         "is_liked_by_creator": True,
-    #         "date": int(picture.date.timestamp()),
-    #     },
-    #     {
-    #         "type": "comment",
-    #         "profile": construct_profile_response(picture.profile, user_profile),
-    #         "picture": construct_picture_response(picture, user_profile),
-    #         "text": "Пикча норм, но паблик говно!",
-    #         "like_url": f"{config['main_server_url']}/app/like_comment/1",
-    #         "likes_num": 100,
-    #         "is_liked": False,
-    #         "is_liked_by_creator": False,
-    #         "date": int(picture.date.timestamp()),
-    #     },
-    # ]
-
-    # return construct_app_response("ok", test_answer)
-
     return construct_app_response("ok", response_content)
 
 
 @csrf_exempt
 @login_user
 def app_suggest_profile(request, user_profile):
-    content = request.POST["content"]
-    ProfileSuggestion.objects.create(profile=user_profile, content=content)
+    url = request.POST["content"]
+    if not is_valid_url(url):
+        return construct_app_response("error", "Url is invalid")
+
+    ProfileSuggestion.objects.create(profile=user_profile, content=url)
     return construct_app_response("ok", None)
 
 

@@ -61,10 +61,18 @@ def add_picture(profile, picture_data, extension, link):
         extension=extension)
 
 
+def delete_picture(picture: Picture):
+    picture.delete()
+
+
 def resize_and_upload_picture_to_storage(picture, raw_picture_data, extension):
     for res, resized_picture in resize_and_compress(raw_picture_data, extension).items():
         url = upload_picture(resized_picture, f'{config["image_server_directory"]}/{id_gen(50)}.{extension}')
         picture_data, _ = PictureData.objects.get_or_create(picture=picture, res=res, url=url)
+
+
+def picture_can_be_deleted_by_user(user_profile: Profile, picture: Picture):
+    return picture.profile == user_profile
 
 
 def high_resolution_url(picture: Picture):
@@ -77,3 +85,7 @@ def mid_resolution_url(picture: Picture):
 
 def low_resolution_url(picture: Picture):
     return picture.picture_data.get(res=320).url
+
+# def get_picture_data_by_resolution(picture: Picture, res):
+#     query = picture.picture_data.filter(res)
+#     if not query.exists():

@@ -1,6 +1,9 @@
 from random import choices
 from string import ascii_lowercase, ascii_uppercase, digits
 
+from django.core.exceptions import ValidationError
+from django.core.validators import URLValidator
+
 ALPHABET = ascii_uppercase + ascii_lowercase + digits + '-_'
 ALPHABET_REVERSE = dict((c, i) for (i, c) in enumerate(ALPHABET))
 BASE = len(ALPHABET)
@@ -36,6 +39,15 @@ def id_from_token(s):
 
 def extension_from_url(url):
     return url.split(".")[-1].split("?")[0]
+
+
+def is_valid_url(url):
+    validator = URLValidator()
+    try:
+        validator(url)
+    except ValidationError:
+        return False
+    return True
 
 
 if __name__ == '__main__':

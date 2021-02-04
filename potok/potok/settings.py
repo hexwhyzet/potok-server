@@ -31,6 +31,20 @@ DEBUG = True
 
 ALLOWED_HOSTS = [config["main_server_ip"], config["grabber_server_url"], "127.0.0.1"]
 
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'console': {
+#             'class': 'logging.StreamHandler',
+#         },
+#     },
+#     'root': {
+#         'handlers': ['console'],
+#         'level': 'WARNING',
+#     },
+# }
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -78,23 +92,23 @@ WSGI_APPLICATION = 'potok.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
-
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': config['database_name'],
-#         'USER': config['database_user'],
-#         'PASSWORD': secrets['database_password'],
-#         'HOST': config['database_local_url'],
-#         'PORT': '',
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
 #     }
 # }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': config['database_name'],
+        'USER': config['database_user'],
+        'PASSWORD': secrets['database_password'],
+        'HOST': config['database_local_url'],
+        'PORT': '',
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -138,7 +152,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 MEDIA_URL = '/media/'
 
-LOGIN_URL='/admin/login/'
+LOGIN_URL = '/admin/login/'
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 

@@ -29,10 +29,9 @@ def switch_subscription(follower: Profile, source: Profile):
 
 
 def last_actions(profile: Profile, number: int, offset: int):
-    likes = Like.objects.filter(picture__profile=profile).order_by('-date')[:offset + number]
-    subscriptions = Subscription.objects.filter(source=profile).order_by('-date')[:offset + number]
-    actions = list(sorted(chain(likes, subscriptions), key=lambda action: action.date, reverse=True))[
-              offset:offset + number]
+    likes = Like.objects.filter(picture__profile=profile).order_by('-date')[offset:offset + number]
+    subscriptions = Subscription.objects.filter(source=profile).order_by('-date')[offset:offset + number]
+    actions = list(sorted(chain(likes, subscriptions), key=lambda action: action.date, reverse=True))[:number]
     return actions
 
 
@@ -49,6 +48,14 @@ def switch_like_comment(profile: Profile, comment: Comment):
 
 def add_comment(profile: Profile, picture: Picture, text: str):
     Comment.objects.create(profile=profile, picture=picture, text=text)
+
+
+def comment_can_be_deleted_by_user(user_profile: Profile, comment: Comment):
+    return user_profile == comment.profile or comment.picture.profile == user_profile
+
+
+def delete_comment(comment: Comment):
+    comment.delete()
 
 
 def comment_by_id(comment_id):
