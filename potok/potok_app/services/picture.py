@@ -1,15 +1,19 @@
+import logging
 from datetime import datetime
 
 import pytz
+import requests
 
 from potok_app.config import Secrets, Config
-from potok_app.functions import id_gen
+from potok_app.functions import id_gen, extension_from_url
 from potok_app.models import Picture, Profile, Session, Like, PictureData
 from potok_app.object_storage_api import upload_picture
 from potok_app.picture_resizer import resize_and_compress
 
 secrets = Secrets()
 config = Config()
+
+logger = logging.getLogger(__name__)
 
 
 def picture_by_id(picture_id):
@@ -65,8 +69,8 @@ def delete_picture(picture: Picture):
     picture.delete()
 
 
-def resize_and_upload_picture_to_storage(picture, raw_picture_data, extension):
-    for res, resized_picture in resize_and_compress(raw_picture_data, extension).items():
+def resize_and_upload_picture_to_storage(picture, raw_picture_data, extension, widths=None):
+    for res, resized_picture in resize_and_compress(raw_picture_data, extension, widths).items():
         url = upload_picture(resized_picture, f'{config["image_server_directory"]}/{id_gen(50)}.{extension}')
         picture_data, _ = PictureData.objects.get_or_create(picture=picture, res=res, url=url)
 
@@ -75,17 +79,22 @@ def picture_can_be_deleted_by_user(user_profile: Profile, picture: Picture):
     return picture.profile == user_profile
 
 
+def get_resolution_url(picture: Picture, res: int):
+    if not picture.picture_data.filter(res=res).exists():
+        logger.warning(f"Picture id: {picture.id} was NOT found with resolution {res}")
+        resize_and_upload_picture_to_storage(picture, requests.get(picture.source_url).content,
+                                             extension_from_url(picture.source_url), [res])
+
+    return picture.picture_data.get(res=res).url
+
+
 def high_resolution_url(picture: Picture):
-    return picture.picture_data.get(res=1280).url
+    return get_resolution_url(picture, 1280)
 
 
 def mid_resolution_url(picture: Picture):
-    return picture.picture_data.get(res=640).url
+    return get_resolution_url(picture, 640)
 
 
 def low_resolution_url(picture: Picture):
-    return picture.picture_data.get(res=320).url
-
-# def get_picture_data_by_resolution(picture: Picture, res):
-#     query = picture.picture_data.filter(res)
-#     if not query.exists():
+    return get_resolution_url(picture, 320)
