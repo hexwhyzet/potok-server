@@ -32,6 +32,20 @@ def are_friends(profile1: Profile, profile2: Profile):
     return profile1 in profile2.subs and profile2 in profile1.subs
 
 
+def is_blocked_by_user(user_profile: Profile, profile: Profile):
+    return user_profile.blocked_profiles.filter(id=profile.id).exists()
+
+
+def is_profile_available(user_profile: Profile, profile: Profile):
+    return not is_blocked_by_user(user_profile, profile)\
+           and not is_blocked_by_user(profile, user_profile) \
+           and (profile.is_public or are_friends(user_profile, profile))
+
+
+def are_liked_pictures_available(user_profile: Profile, profile: Profile):
+    return is_profile_available(user_profile, profile) and profile.are_liked_pictures_public
+
+
 def latest_avatar(profile: Profile):
     if profile.avatars.exists():
         return profile.avatars.latest('id')
@@ -51,3 +65,10 @@ def add_avatar(profile, raw_avatar_data, extension, res=None, source_url=None):
     avatar, _ = Avatar.objects.get_or_create(profile=profile, source_url=source_url)
     url = upload_picture(raw_avatar_data, f'{config["image_server_directory"]}/{id_gen(50)}.{extension}')
     AvatarData.objects.create(avatar=avatar, url=url, res=res)
+
+
+def switch_block(blocker, blocked):
+    if blocker.blocked_profiles.filter(id=blocked.id).exists():
+        blocker.blocked_profiles.get(id=blocked.id).delete()
+    else:
+        blocker.blocked_profiles.add(blocked)

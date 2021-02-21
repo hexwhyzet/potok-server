@@ -17,9 +17,9 @@ from potok_app.services.authorizer import login_user, get_device_id, anonymous_u
 from potok_app.services.link import link_by_share_token, create_link, share_token_by_link
 from potok_app.services.picture import subscription_pictures, feed_pictures, profile_pictures, \
     picture_by_id, liked_pictures, high_resolution_url, mid_resolution_url, low_resolution_url, add_picture, \
-    picture_can_be_deleted_by_user, delete_picture
+    picture_can_be_deleted_by_user, delete_picture, add_report
 from potok_app.services.profile import profile_by_id, search_profiles_by_screen_name_prefix, search_profiles_by_text, \
-    avatar_url
+    avatar_url, switch_block, is_profile_available, are_liked_pictures_available, is_blocked_by_user
 from potok_app.services.session import create_session, session_by_token
 
 secrets = Secrets()
@@ -55,6 +55,7 @@ def construct_picture_response(pic: Picture, user_profile: Profile = None):
         "add_comment_url": f"{config['main_server_url']}/app/add_comment/{pic.id}",
         "profile": construct_profile_response(pic.profile, user_profile),
         "link_url": pic.link_url,
+        "report_url": f"{config['main_server_url']}/app/report_picture/{pic.id}",
         "delete_url": f"{config['main_server_url']}/app/delete_picture/{pic.id}",
         "can_be_deleted": picture_can_be_deleted_by_user(user_profile, pic),
         "text": pic.text,
@@ -71,8 +72,10 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
     response_content = {
         "id": profile.id,
         "type": "profile",
-        "is_public": profile.is_public,
-        "are_liked_pictures_public": profile.are_liked_pictures_public,
+        "is_user_blocked_by_you": is_blocked_by_user(user_profile, profile),
+        "are_you_blocked_by_user": is_blocked_by_user(profile, user_profile),
+        "is_profile_available": is_profile_available(user_profile, profile),
+        "are_liked_pictures_available": are_liked_pictures_available(user_profile, profile),
         "name": profile.name or "unknown",
         "screen_name": profile.screen_name or "unknown",
         "description": profile.description,
@@ -84,6 +87,7 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
         "is_subscribed": user_profile.subs.filter(id=profile.id).exists() if user_profile is not None else False,
         "subscribe_url": f"{config['main_server_url']}/app/subscribe/{profile.id}",
         "share_url": f"{config['main_server_url']}/app/share_profile/{profile.id}",
+        "block_url": f"{config['main_server_url']}/app/block_profile/{profile.id}",
         "is_yours": profile == user_profile,
     }
     return response_content
@@ -310,6 +314,20 @@ def app_picture_comments(request, user_profile, picture_id, number, offset):
                            key=lambda comment: comment.profile == user_profile, reverse=True))
     response_content = construct_comments(user_profile, comments)
     return construct_app_response("ok", response_content)
+
+
+@login_user
+def app_block_profile(request, user_profile, profile_id):
+    block_profile = profile_by_id(profile_id)
+    switch_block(user_profile, block_profile)
+    return construct_app_response("ok", None)
+
+
+@login_user
+def app_report_picture(request, user_profile, picture_id):
+    picture = picture_by_id(picture_id)
+    add_report(user_profile, picture)
+    return construct_app_response("ok", None)
 
 
 @csrf_exempt

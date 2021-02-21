@@ -16,7 +16,6 @@ Including another URLconf
 from django.urls import path
 
 from . import views
-
 urlpatterns = [
     path("app/my_profile", views.app_my_profile),
     path("app/subscription_pictures/<str:session_token>/<int:number>", views.app_subscription_pictures),
@@ -39,6 +38,8 @@ urlpatterns = [
     path("app/add_comment/<int:picture_id>", views.app_add_comment),
     path("app/delete_comment/<int:comment_id>", views.app_delete_comment),
     path("app/suggest_profile", views.app_suggest_profile),
+    path("app/block_profile/<int:profile_id>", views.app_block_profile),
+    path("app/report_picture/<int:picture_id>", views.app_report_picture),
 
     path("share/<str:share_token>", views.content_by_link),
 
@@ -47,3 +48,4 @@ urlpatterns = [
     path("send_profiles", views.update_profiles_db),
     path("send_pictures", views.update_pictures_db),
 ]
+

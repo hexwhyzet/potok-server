@@ -15,7 +15,7 @@ class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.CASCADE)
     subs = models.ManyToManyField('self', symmetrical=False, through='Subscription', related_name='followers',
                                   blank=True)
-
+    blocked_profiles = models.ManyToManyField('self', symmetrical=False, through='ProfileBlock', blank=True)
     is_public = models.BooleanField(default=True)
     are_liked_pictures_public = models.BooleanField(default=False)
 
@@ -96,6 +96,18 @@ class Subscription(models.Model):
 
     class Meta:
         unique_together = ('follower', 'source')
+
+
+class ProfileBlock(models.Model):
+    blocker = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='blockers')
+    blocked = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='blocked')
+    date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
+
+
+class PictureReport(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="reports")
+    picture = models.ForeignKey(Picture, on_delete=models.CASCADE, related_name="reports")
+    date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
 
 
 class CommentLike(models.Model):

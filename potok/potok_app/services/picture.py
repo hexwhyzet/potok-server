@@ -6,7 +6,7 @@ import requests
 
 from potok_app.config import Secrets, Config
 from potok_app.functions import id_gen, extension_from_url
-from potok_app.models import Picture, Profile, Session, Like, PictureData
+from potok_app.models import Picture, Profile, Session, Like, PictureData, PictureReport
 from potok_app.object_storage_api import upload_picture
 from potok_app.picture_resizer import resize_and_compress
 
@@ -86,6 +86,10 @@ def get_resolution_url(picture: Picture, res: int):
                                              extension_from_url(picture.source_url), [res])
 
     return picture.picture_data.get(res=res).url
+
+
+def add_report(profile: Profile, picture: Picture):
+    PictureReport.objects.create(profile=profile, picture=picture)
 
 
 def high_resolution_url(picture: Picture):
