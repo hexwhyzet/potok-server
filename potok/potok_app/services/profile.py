@@ -2,7 +2,7 @@ from django.contrib.postgres.search import TrigramSimilarity
 
 from potok_app.config import Secrets, Config
 from potok_app.functions import id_gen
-from potok_app.models import Profile, Avatar, AvatarData
+from potok_app.models import Profile, Avatar, AvatarData, ProfileBlock
 from potok_app.object_storage_api import upload_picture
 
 secrets = Secrets()
@@ -68,7 +68,7 @@ def add_avatar(profile, raw_avatar_data, extension, res=None, source_url=None):
 
 
 def switch_block(blocker, blocked):
-    if blocker.blocked_profiles.filter(id=blocked.id).exists():
-        blocker.blocked_profiles.get(id=blocked.id).delete()
+    if ProfileBlock.objects.filter(blocked=blocked).exists():
+        ProfileBlock.objects.filter(blocked=blocked).delete()
     else:
-        blocker.blocked_profiles.add(blocked)
+        ProfileBlock.objects.create(blocker=blocker, blocked=blocked)

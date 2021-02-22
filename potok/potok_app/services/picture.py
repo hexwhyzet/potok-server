@@ -23,7 +23,7 @@ def picture_by_id(picture_id):
 def subscription_pictures(profile: Profile, session: Session, number: int):
     pictures = Picture.objects.filter(profile__followers=profile).exclude(profiles_viewed=profile).exclude(
         id__in=[m.id for m in session.feed_pics.all() | session.sub_pics.all()]).exclude(
-        profile__id=profile.id).order_by("-date")[:number]
+        profile__id=profile.id).exclude(profile__in=profile.blocked_profiles.all()).order_by("-date")[:number]
     for picture in pictures:
         picture.views_num += 1
         picture.save()
@@ -35,7 +35,7 @@ def subscription_pictures(profile: Profile, session: Session, number: int):
 def feed_pictures(profile: Profile, session: Session, number: int):
     pictures = Picture.objects.exclude(profile__is_public=False).exclude(profiles_viewed=profile).exclude(
         id__in=[m.id for m in session.feed_pics.all() | session.sub_pics.all()]).exclude(
-        profile__id=profile.id).order_by("-date")[:number]
+        profile__id=profile.id).exclude(profile__in=profile.blocked_profiles.all()).order_by("-date")[:number]
     for picture in pictures:
         picture.views_num += 1
         picture.save()

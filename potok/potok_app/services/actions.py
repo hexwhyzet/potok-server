@@ -28,6 +28,11 @@ def switch_subscription(follower: Profile, source: Profile):
         Subscription.objects.create(follower=follower, source=source)
 
 
+def unsubscribe(follower: Profile, source: Profile):
+    if Subscription.objects.filter(follower=follower, source=source).exists():
+        Subscription.objects.get(follower=follower, source=source).delete()
+
+
 def last_actions(profile: Profile, number: int, offset: int):
     likes = Like.objects.filter(picture__profile=profile).order_by('-date')[offset:offset + number]
     subscriptions = Subscription.objects.filter(source=profile).order_by('-date')[offset:offset + number]

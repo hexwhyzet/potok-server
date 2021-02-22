@@ -40,6 +40,7 @@ urlpatterns = [
     path("app/suggest_profile", views.app_suggest_profile),
     path("app/block_profile/<int:profile_id>", views.app_block_profile),
     path("app/report_picture/<int:picture_id>", views.app_report_picture),
+    path("app/profile/<int:profile_id>", views.app_profile),
 
     path("share/<str:share_token>", views.content_by_link),
 

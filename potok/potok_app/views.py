@@ -11,7 +11,7 @@ from potok_app.functions import is_valid_url
 from potok_app.importer import pics_json_parser, profiles_json_parser
 from potok_app.models import Picture, Profile, Like, Subscription, Comment, CommentLike, ProfileSuggestion
 from potok_app.services.actions import switch_like, last_actions, add_view, switch_subscription, comment_by_id, \
-    add_comment, comments_of_picture, switch_like_comment, comment_can_be_deleted_by_user, delete_comment
+    add_comment, comments_of_picture, switch_like_comment, comment_can_be_deleted_by_user, delete_comment, unsubscribe
 from potok_app.services.authorizer import login_user, get_device_id, anonymous_user_exist, \
     create_anonymous_user, anonymous_user_by_device_id
 from potok_app.services.link import link_by_share_token, create_link, share_token_by_link
@@ -72,6 +72,7 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
     response_content = {
         "id": profile.id,
         "type": "profile",
+        "is_public": user_profile.is_public,
         "is_user_blocked_by_you": is_blocked_by_user(user_profile, profile),
         "are_you_blocked_by_user": is_blocked_by_user(profile, user_profile),
         "is_profile_available": is_profile_available(user_profile, profile),
@@ -89,6 +90,7 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
         "share_url": f"{config['main_server_url']}/app/share_profile/{profile.id}",
         "block_url": f"{config['main_server_url']}/app/block_profile/{profile.id}",
         "is_yours": profile == user_profile,
+        "reload_url": f"{config['main_server_url']}/app/profile/{profile.id}",
     }
     return response_content
 
@@ -319,6 +321,7 @@ def app_picture_comments(request, user_profile, picture_id, number, offset):
 @login_user
 def app_block_profile(request, user_profile, profile_id):
     block_profile = profile_by_id(profile_id)
+    unsubscribe(user_profile, block_profile)
     switch_block(user_profile, block_profile)
     return construct_app_response("ok", None)
 
@@ -328,6 +331,13 @@ def app_report_picture(request, user_profile, picture_id):
     picture = picture_by_id(picture_id)
     add_report(user_profile, picture)
     return construct_app_response("ok", None)
+
+
+@login_user
+def app_profile(request, user_profile, profile_id):
+    profile = profile_by_id(profile_id)
+    response_content = construct_profile_response(profile, user_profile)
+    return construct_app_response("ok", response_content)
 
 
 @csrf_exempt
