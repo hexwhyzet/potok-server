@@ -19,7 +19,7 @@ from potok_app.services.picture import subscription_pictures, feed_pictures, pro
     picture_by_id, liked_pictures, high_resolution_url, mid_resolution_url, low_resolution_url, add_picture, \
     picture_can_be_deleted_by_user, delete_picture, add_report
 from potok_app.services.profile import profile_by_id, search_profiles_by_screen_name_prefix, search_profiles_by_text, \
-    avatar_url, switch_block, is_profile_available, are_liked_pictures_available, is_blocked_by_user
+    avatar_url, switch_block, is_profile_available, are_liked_pictures_available, is_blocked_by_user, is_profile_yours
 from potok_app.services.session import create_session, session_by_token
 
 secrets = Secrets()
@@ -72,11 +72,11 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
     response_content = {
         "id": profile.id,
         "type": "profile",
-        "is_public": user_profile.is_public,
-        "is_user_blocked_by_you": is_blocked_by_user(user_profile, profile),
-        "are_you_blocked_by_user": is_blocked_by_user(profile, user_profile),
-        "is_profile_available": is_profile_available(user_profile, profile),
-        "are_liked_pictures_available": are_liked_pictures_available(user_profile, profile),
+        "is_public": profile.is_public,
+        "is_user_blocked_by_you": is_blocked_by_user(user_profile, profile) if user_profile is not None else None,
+        "are_you_blocked_by_user": is_blocked_by_user(profile, user_profile) if user_profile is not None else None,
+        "is_profile_available": is_profile_available(user_profile, profile) if user_profile is not None else None,
+        "are_liked_pictures_available": are_liked_pictures_available(user_profile, profile) if user_profile is not None else None,
         "name": profile.name or "unknown",
         "screen_name": profile.screen_name or "unknown",
         "description": profile.description,
@@ -89,7 +89,7 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
         "subscribe_url": f"{config['main_server_url']}/app/subscribe/{profile.id}",
         "share_url": f"{config['main_server_url']}/app/share_profile/{profile.id}",
         "block_url": f"{config['main_server_url']}/app/block_profile/{profile.id}",
-        "is_yours": profile == user_profile,
+        "is_yours": is_profile_yours(user_profile, profile),
         "reload_url": f"{config['main_server_url']}/app/profile/{profile.id}",
     }
     return response_content
