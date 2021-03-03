@@ -26,6 +26,13 @@ def profile_by_token(request) -> Profile:
     token = get_token(request)
     if CustomAnonymousUser.objects.filter(token=token).exists():
         anonymous_user = CustomAnonymousUser.objects.filter(token=token).first()
+
+        if not Profile.objects.filter(user=anonymous_user).exists():
+            profile = Profile(
+                user=anonymous_user,
+            )
+            profile.save()
+
         return anonymous_user.profile
     elif CustomUser.objects.filter(token=token).exists():
         user = CustomUser.objects.filter(token=token).first()

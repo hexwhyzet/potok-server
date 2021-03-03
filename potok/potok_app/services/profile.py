@@ -73,7 +73,10 @@ def avatar_url(profile: Profile):
 
 
 def add_avatar(profile, raw_avatar_data, extension, source_url=None):
-    avatar, _ = Avatar.objects.get_or_create(profile=profile, source_url=source_url)
+    if source_url is not None:
+        avatar, _ = Avatar.objects.get_or_create(profile=profile, source_url=source_url)
+    else:
+        avatar = Avatar.objects.create(profile=profile)
     resize_and_upload_avatar_to_storage(avatar, raw_avatar_data, extension, [200])
 
 
