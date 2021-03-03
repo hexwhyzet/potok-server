@@ -4,6 +4,7 @@ from potok_app.config import Secrets, Config
 from potok_app.functions import id_gen
 from potok_app.models import Profile, Avatar, AvatarData, ProfileBlock
 from potok_app.object_storage_api import upload_picture
+from potok_app.picture_resizer import resize_and_compress
 
 secrets = Secrets()
 config = Config()
@@ -71,10 +72,15 @@ def avatar_url(profile: Profile):
         return None
 
 
-def add_avatar(profile, raw_avatar_data, extension, res=None, source_url=None):
+def add_avatar(profile, raw_avatar_data, extension, source_url=None):
     avatar, _ = Avatar.objects.get_or_create(profile=profile, source_url=source_url)
-    url = upload_picture(raw_avatar_data, f'{config["image_server_directory"]}/{id_gen(50)}.{extension}')
-    AvatarData.objects.create(avatar=avatar, url=url, res=res)
+    resize_and_upload_avatar_to_storage(avatar, raw_avatar_data, extension, [200])
+
+
+def resize_and_upload_avatar_to_storage(avatar, raw_picture_data, extension, widths=None):
+    for res, resized_picture in resize_and_compress(raw_picture_data, extension, widths).items():
+        url = upload_picture(resized_picture, f'{config["image_server_directory"]}/{id_gen(50)}.{extension}')
+        picture_data, _ = AvatarData.objects.get_or_create(avatar=avatar, res=res, url=url)
 
 
 def switch_block(blocker, blocked):
@@ -82,3 +88,27 @@ def switch_block(blocker, blocked):
         ProfileBlock.objects.filter(blocked=blocked).delete()
     else:
         ProfileBlock.objects.create(blocker=blocker, blocked=blocked)
+
+
+def update_screen_name(profile: Profile, screen_name: str):
+    profile.screen_name = screen_name
+    profile.save()
+
+
+def update_name(profile: Profile, name: str):
+    profile.name = name
+    profile.save()
+
+
+def does_screen_name_exists(screen_name: str):
+    return Profile.objects.filter(screen_name=screen_name).exists()
+
+
+def update_publicity(profile: Profile, is_public: bool):
+    profile.is_public = is_public
+    profile.save()
+
+
+def update_liked_pictures_publicity(profile: Profile, are_liked_pictures_public: bool):
+    profile.are_liked_pictures_public = are_liked_pictures_public
+    profile.save()

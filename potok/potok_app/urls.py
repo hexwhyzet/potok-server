@@ -16,6 +16,7 @@ Including another URLconf
 from django.urls import path
 
 from . import views
+
 urlpatterns = [
     path("app/my_profile", views.app_my_profile),
     path("app/subscription_pictures/<str:session_token>/<int:number>", views.app_subscription_pictures),
@@ -27,6 +28,7 @@ urlpatterns = [
     path("app/subscribe/<int:sub_profile_id>", views.app_switch_subscription),
     path("app/create_session", views.app_create_session_request),
     path("app/upload_picture", views.app_add_picture),
+    path("app/upload_avatar", views.app_add_avatar),
     path("app/mark_as_seen/<int:picture_id>", views.app_add_view),
     path("app/last_actions/<int:number>/<int:offset>", views.app_last_actions),
     path("app/share_profile/<str:profile_id>", views.app_generate_profile_share_link),
@@ -41,6 +43,9 @@ urlpatterns = [
     path("app/block_profile/<int:profile_id>", views.app_block_profile),
     path("app/report_picture/<int:picture_id>", views.app_report_picture),
     path("app/profile/<int:profile_id>", views.app_profile),
+    # path("app/get_app_settings", views.app_get_app_settings),
+    # path("app/get_profile_settings", views.app_get_profile_settings),
+    path("app/change_setting/<str:setting_name>/<str:new_value>", views.app_change_setting),
 
     path("share/<str:share_token>", views.content_by_link),
 
@@ -49,4 +54,3 @@ urlpatterns = [
     path("send_profiles", views.update_profiles_db),
     path("send_pictures", views.update_pictures_db),
 ]
-

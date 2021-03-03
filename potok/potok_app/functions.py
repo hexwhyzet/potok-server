@@ -50,6 +50,14 @@ def is_valid_url(url):
     return True
 
 
+def does_contain_only_letters_numbers_underscores(string):
+    pool = ascii_lowercase + digits + "_"
+    for letter in string:
+        if letter not in pool:
+            return False
+    return True
+
+
 if __name__ == '__main__':
     pass
     # token = 'a'

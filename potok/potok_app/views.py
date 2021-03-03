@@ -7,9 +7,10 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
 from potok_app.config import Secrets, Config
-from potok_app.functions import is_valid_url
+from potok_app.functions import is_valid_url, does_contain_only_letters_numbers_underscores
 from potok_app.importer import pics_json_parser, profiles_json_parser
-from potok_app.models import Picture, Profile, Like, Subscription, Comment, CommentLike, ProfileSuggestion
+from potok_app.models import Picture, Profile, Like, Subscription, Comment, CommentLike, ProfileSuggestion, \
+    NAME_MAX_LENGTH, SCREEN_NAME_MAX_LENGTH
 from potok_app.services.actions import switch_like, last_actions, add_view, switch_subscription, comment_by_id, \
     add_comment, comments_of_picture, switch_like_comment, comment_can_be_deleted_by_user, delete_comment, unsubscribe
 from potok_app.services.authorizer import login_user, get_device_id, anonymous_user_exist, \
@@ -19,7 +20,9 @@ from potok_app.services.picture import subscription_pictures, feed_pictures, pro
     picture_by_id, liked_pictures, high_resolution_url, mid_resolution_url, low_resolution_url, add_picture, \
     picture_can_be_deleted_by_user, delete_picture, add_report
 from potok_app.services.profile import profile_by_id, search_profiles_by_screen_name_prefix, search_profiles_by_text, \
-    avatar_url, switch_block, is_profile_available, are_liked_pictures_available, is_blocked_by_user, is_profile_yours
+    avatar_url, switch_block, is_profile_available, are_liked_pictures_available, is_blocked_by_user, is_profile_yours, \
+    update_name, does_screen_name_exists, update_screen_name, update_publicity, update_liked_pictures_publicity, \
+    add_avatar
 from potok_app.services.session import create_session, session_by_token
 
 secrets = Secrets()
@@ -76,7 +79,8 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
         "is_user_blocked_by_you": is_blocked_by_user(user_profile, profile) if user_profile is not None else None,
         "are_you_blocked_by_user": is_blocked_by_user(profile, user_profile) if user_profile is not None else None,
         "is_profile_available": is_profile_available(user_profile, profile) if user_profile is not None else None,
-        "are_liked_pictures_available": are_liked_pictures_available(user_profile, profile) if user_profile is not None else None,
+        "are_liked_pictures_available": are_liked_pictures_available(user_profile,
+                                                                     profile) if user_profile is not None else None,
         "name": profile.name or "unknown",
         "screen_name": profile.screen_name or "unknown",
         "description": profile.description,
@@ -213,6 +217,14 @@ def app_add_picture(request, user_profile):
     return construct_app_response("ok", None)
 
 
+@csrf_exempt
+@login_user
+def app_add_avatar(request, user_profile):
+    avatar_data = base64.b64decode(request.POST["avatar"])
+    add_avatar(user_profile, avatar_data, request.POST["extension"])
+    return construct_app_response("ok", None)
+
+
 @login_user
 def app_switch_like(request, user_profile, picture_id):
     picture = picture_by_id(picture_id)
@@ -322,6 +334,10 @@ def app_picture_comments(request, user_profile, picture_id, number, offset):
 def app_block_profile(request, user_profile, profile_id):
     block_profile = profile_by_id(profile_id)
     unsubscribe(user_profile, block_profile)
+    unsubscribe(block_profile, user_profile)
+    if user_profile == block_profile:
+        return construct_app_response("You cannot block yourself", None)
+
     switch_block(user_profile, block_profile)
     return construct_app_response("ok", None)
 
@@ -338,6 +354,67 @@ def app_profile(request, user_profile, profile_id):
     profile = profile_by_id(profile_id)
     response_content = construct_profile_response(profile, user_profile)
     return construct_app_response("ok", response_content)
+
+
+@login_user
+def app_get_app_settings(request, user_profile):
+    settings = [
+        {
+            "name": "Privacy",
+            "type": "header",
+        },
+        {
+            "name": "Pictures privacy",
+            "type": "setting",
+            "format": "single_select",
+            "value": user_profile.is_public,
+            "options": [
+                {
+                    "name": "Public",
+                    "description": "Everyone will see your pictures and can subscribe to you",
+                },
+                {
+                    "name": "Private",
+                    "description": "Only accepted followers will see your pictures.",
+                },
+            ],
+        },
+        {
+            "name": "Change name",
+            "type": "setting",
+            "format": "string",
+        },
+    ]
+
+
+@login_user
+def app_change_setting(request, user_profile: Profile, setting_name, new_value):
+    if setting_name == "screen_name":
+        if len(new_value) > SCREEN_NAME_MAX_LENGTH:
+            return construct_app_response(f"Username should be shorter than {NAME_MAX_LENGTH} letters", None)
+        if not does_contain_only_letters_numbers_underscores(new_value):
+            return construct_app_response("Only letters, numbers, underscores are allowed", None)
+        if does_screen_name_exists(new_value):
+            return construct_app_response("The username is already taken", None)
+        update_screen_name(user_profile, new_value)
+        return construct_app_response("ok", None)
+    elif setting_name == "name":
+        if len(new_value) > NAME_MAX_LENGTH:
+            return construct_app_response("error", f"Name should be shorter than {NAME_MAX_LENGTH} letters")
+        update_name(user_profile, new_value)
+        return construct_app_response("ok", None)
+    elif setting_name == "is_public":
+        if str(new_value) == "0":
+            update_publicity(user_profile, False)
+        else:
+            update_publicity(user_profile, True)
+        return construct_app_response("ok", None)
+    elif setting_name == "are_liked_pictures_public":
+        if str(new_value) == "0":
+            update_liked_pictures_publicity(user_profile, False)
+        else:
+            update_liked_pictures_publicity(user_profile, True)
+        return construct_app_response("ok", None)
 
 
 @csrf_exempt
