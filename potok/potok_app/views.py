@@ -76,6 +76,7 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
         "id": profile.id,
         "type": "profile",
         "is_public": profile.is_public,
+        "are_liked_pictures_public": profile.are_liked_pictures_public,
         "is_user_blocked_by_you": is_blocked_by_user(user_profile, profile) if user_profile is not None else None,
         "are_you_blocked_by_user": is_blocked_by_user(profile, user_profile) if user_profile is not None else None,
         "is_profile_available": is_profile_available(user_profile, profile) if user_profile is not None else None,

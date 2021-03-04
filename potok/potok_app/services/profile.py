@@ -1,4 +1,4 @@
-from django.contrib.postgres.search import TrigramSimilarity
+from django.contrib.postgres.search import TrigramSimilarity, SearchVector, SearchQuery, SearchRank
 from django.db.models import Count
 
 from potok_app.config import Secrets, Config
@@ -26,8 +26,13 @@ def search_profiles_by_screen_name_prefix(prefix, number, offset):
 #            offset:offset + number]
 
 def search_profiles_by_text(text, number, offset):
-    return Profile.objects.annotate(similarity=TrigramSimilarity('screen_name', text)) \
-               .filter(similarity__gt=0.25).order_by('-similarity')[offset:offset + number]
+
+    name_rank = SearchRank(SearchVector('name'), SearchQuery(text)) * 8
+
+    trigram_similarity = TrigramSimilarity('screen_name', text)
+
+    return Profile.objects.annotate(rank=name_rank + trigram_similarity).filter(
+        rank__gt=0.25).order_by('-rank')[offset:offset + number]
 
 
 def are_friends(profile1: Profile, profile2: Profile):
@@ -119,5 +124,6 @@ def update_liked_pictures_publicity(profile: Profile, are_liked_pictures_public:
 
 
 def trending_profiles(number, offset):
-    profiles = Profile.objects.annotate(pics_num=Count('pics')).filter(pics_num__gt=0).annotate(trend_rank=Count('followers')).order_by('-trend_rank').all()[offset:offset + number]
+    profiles = Profile.objects.annotate(pics_num=Count('pics')).filter(pics_num__gt=0).annotate(
+        trend_rank=Count('followers')).order_by('-trend_rank').all()[offset:offset + number]
     return profiles
