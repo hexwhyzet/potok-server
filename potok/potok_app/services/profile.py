@@ -1,4 +1,5 @@
 from django.contrib.postgres.search import TrigramSimilarity
+from django.db.models import Count
 
 from potok_app.config import Secrets, Config
 from potok_app.functions import id_gen
@@ -115,3 +116,8 @@ def update_publicity(profile: Profile, is_public: bool):
 def update_liked_pictures_publicity(profile: Profile, are_liked_pictures_public: bool):
     profile.are_liked_pictures_public = are_liked_pictures_public
     profile.save()
+
+
+def trending_profiles(number, offset):
+    profiles = Profile.objects.annotate(pics_num=Count('pics')).filter(pics_num__gt=0).annotate(trend_rank=Count('followers')).order_by('-trend_rank').all()[offset:offset + number]
+    return profiles

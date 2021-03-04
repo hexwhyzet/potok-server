@@ -22,7 +22,7 @@ from potok_app.services.picture import subscription_pictures, feed_pictures, pro
 from potok_app.services.profile import profile_by_id, search_profiles_by_screen_name_prefix, search_profiles_by_text, \
     avatar_url, switch_block, is_profile_available, are_liked_pictures_available, is_blocked_by_user, is_profile_yours, \
     update_name, does_screen_name_exists, update_screen_name, update_publicity, update_liked_pictures_publicity, \
-    add_avatar
+    add_avatar, trending_profiles
 from potok_app.services.session import create_session, session_by_token
 
 secrets = Secrets()
@@ -415,6 +415,13 @@ def app_change_setting(request, user_profile: Profile, setting_name, new_value):
         else:
             update_liked_pictures_publicity(user_profile, True)
         return construct_app_response("ok", None)
+
+
+@login_user
+def app_trending(request, user_profile, number, offset):
+    profiles = trending_profiles(number, offset)
+    response = construct_profiles(profiles, user_profile)
+    return construct_app_response("ok", response)
 
 
 @csrf_exempt

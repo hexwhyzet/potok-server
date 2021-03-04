@@ -46,6 +46,7 @@ urlpatterns = [
     # path("app/get_app_settings", views.app_get_app_settings),
     # path("app/get_profile_settings", views.app_get_profile_settings),
     path("app/change_setting/<str:setting_name>/<str:new_value>", views.app_change_setting),
+    path("app/trending/<int:number>/<int:offset>", views.app_trending),
 
     path("share/<str:share_token>", views.content_by_link),
 
