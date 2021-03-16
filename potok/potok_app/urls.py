@@ -20,7 +20,7 @@ from . import views
 urlpatterns = [
     path("app/my_profile", views.app_my_profile),
     path("app/subscription_pictures/<str:session_token>/<int:number>", views.app_subscription_pictures),
-    path("app/feed_pictures/<str:session_token>/<int:number>", views.app_feed_pictures),
+    path("app/feed_pictures/<str:session_token>/<int:number>", views.app_feed_pictures),  # is going to be removed
     path("app/profile_pictures/<int:profile_id>/<int:number>/<int:offset>", views.app_profile_pictures),
     path("app/liked_pictures/<int:profile_id>/<int:number>/<int:offset>", views.app_liked_pictures),
     path("app/like_picture/<int:picture_id>", views.app_switch_like),

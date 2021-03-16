@@ -142,6 +142,13 @@ def construct_comment_response(comment: Comment, user_profile: Profile):
     return response_content
 
 
+def construct_ads_response():
+    response_content = {
+        "type": "ads",
+    }
+    return response_content
+
+
 def construct_comments(user_profile: Profile, comments: list[Comment]):
     constructed_comments = [construct_comment_response(comment, user_profile) for comment in comments]
     return constructed_comments
@@ -168,6 +175,8 @@ def app_subscription_pictures(request, user_profile, session_token, number):
     session = session_by_token(session_token)
     pictures = subscription_pictures(user_profile, session, number)
     response_content = construct_pictures(pictures, user_profile)
+    # if len(response_content) > 0:
+    #     response_content += [construct_ads_response()]
     return construct_app_response("ok", response_content)
 
 
@@ -176,6 +185,8 @@ def app_feed_pictures(request, user_profile, session_token, number):
     session = session_by_token(session_token)
     pictures = feed_pictures(user_profile, session, number)
     response_content = construct_pictures(pictures, user_profile)
+    # if len(response_content) > 0:
+    #     response_content += [construct_ads_response()]
     return construct_app_response("ok", response_content)
 
 
