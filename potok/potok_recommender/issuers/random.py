@@ -1,9 +1,10 @@
 from potok_app.models import Picture, Profile
 from potok_recommender.models import Ticket, Issuer
+from potok_recommender.services.ticket import not_issued_tickets
 
 
 def random_process_issue(profile: Profile, number):
-    not_issued_tickets_num = Ticket.objects.filter(is_issued=False).count()
+    not_issued_tickets_num = not_issued_tickets(profile).count()
     if not_issued_tickets_num < 30:
         random_generate_tickets(profile, 30)
 
@@ -25,7 +26,8 @@ def random_generate_tickets(profile: Profile, number: int):
 
 
 def random_tickets(profile: Profile, number: int):
-    tickets = Ticket.objects.filter(is_issued=False, profile=profile).order_by("date_created")[:number]
+    print(Ticket.objects.filter(is_issued=False, profile=profile))
+    tickets = not_issued_tickets(profile).order_by("date_created")[:number]
     for ticket in tickets:
         ticket.is_issued = True
     Ticket.objects.bulk_update(tickets, ["is_issued"])

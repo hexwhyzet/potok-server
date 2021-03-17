@@ -86,7 +86,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_rename_app',
     'potok_app.apps.PotokAppConfig',
-    'oauth2_provider',
+    'potok_recommender.apps.PotokRecommenderConfig',
+    # 'oauth2_provider',
 ]
 
 MIDDLEWARE = [

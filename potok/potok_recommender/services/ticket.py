@@ -1,3 +1,4 @@
+from potok_app.models import Profile
 from potok_recommender.models import Ticket
 
 
@@ -13,3 +14,7 @@ def update_ticket(user_profile, ticket_json):
         ticket.is_liked = ticket_json["is_liked"]
         ticket.is_shared = ticket_json["is_shared"]
         ticket.save()
+
+
+def not_issued_tickets(profile: Profile):
+    return Ticket.objects.filter(is_issued=False, profile=profile)

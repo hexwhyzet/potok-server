@@ -37,9 +37,9 @@ def construct_tickets(tickets: List[Ticket], user_profile: Profile):
     return [construct_ticket_response(ticket, user_profile) for ticket in tickets]
 
 
-def issue_tickets_by_profile_id(profile_id: int):
-    profile = profile_by_id(profile_id)
-    return issue_tickets_by_profile(profile=profile)
+# def issue_tickets_by_profile_id(profile_id: int):
+#     profile = profile_by_id(profile_id)
+#     return issue_tickets_by_profile(profile=profile)
 
 
 def issue_tickets_by_profile(profile: Profile, number):
