@@ -4,13 +4,13 @@ from random import randint
 
 import pytz
 import requests
-from django.contrib.auth.models import User
 
 from potok_app.config import Config, Secrets
 from potok_app.functions import extension_from_url
 from potok_app.models import Picture, Profile
 from potok_app.services.picture import resize_and_upload_picture_to_storage
 from potok_app.services.profile import add_avatar
+from potok_users.models import User
 
 secrets = Secrets()
 config = Config()
@@ -30,9 +30,11 @@ def pics_json_parser(pictures_json):
     """
     pictures_data = json.loads(pictures_json)
     for picture_data in pictures_data:
-        pic_profile, _ = Profile.objects.get_or_create(
-            minor_id=picture_data['source'] + str(abs(int(picture_data['source_profile_id']))),
-            defaults={"user": User.objects.create_user(str(randint(1, 100000000000)))})
+        pic_profile, created = Profile.objects.get_or_create(
+            minor_id=picture_data['source'] + str(abs(int(picture_data['source_profile_id']))))
+
+        if created:
+            pic_profile.user = User.objects.create_user(str(randint(1, 100000000000)))
 
         picture, created = Picture.objects.get_or_create(profile=pic_profile,
                                                          minor_id=picture_data['source_picture_id'],
