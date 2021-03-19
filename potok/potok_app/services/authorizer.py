@@ -1,7 +1,8 @@
 from random import randint
 
 from potok_app.functions import id_gen
-from potok_app.models import CustomAnonymousUser, Profile, CustomUser
+from potok_app.models import Profile
+from potok_users.models import User
 
 
 def get_device_id(request):
@@ -24,8 +25,8 @@ def get_token(request):
 
 def profile_by_token(request) -> Profile:
     token = get_token(request)
-    if CustomAnonymousUser.objects.filter(token=token).exists():
-        anonymous_user = CustomAnonymousUser.objects.filter(token=token).first()
+    if User.objects.filter(token=token).exists():
+        anonymous_user = User.objects.filter(token=token).first()
 
         if not Profile.objects.filter(user=anonymous_user).exists():
             profile = Profile(
@@ -34,8 +35,8 @@ def profile_by_token(request) -> Profile:
             profile.save()
 
         return anonymous_user.profile
-    elif CustomUser.objects.filter(token=token).exists():
-        user = CustomUser.objects.filter(token=token).first()
+    elif User.objects.filter(token=token).exists():
+        user = User.objects.filter(token=token).first()
         return user.profile
     else:
         raise ValueError("User with this token was not found")
@@ -51,7 +52,7 @@ def login_user(func):
 
 def create_anonymous_user(device_id):
     random_int = randint(1, 1000000000)
-    anonymous_user = CustomAnonymousUser(
+    anonymous_user = User(
         id=str(random_int),
         device_id=device_id,
         token=id_gen(80),
@@ -66,8 +67,10 @@ def create_anonymous_user(device_id):
 
 
 def anonymous_user_by_device_id(device_id):
-    return CustomAnonymousUser.objects.get(device_id=device_id)
+    return User()
+    # return CustomAnonymousUser.objects.get(device_id=device_id)
 
 
 def anonymous_user_exist(device_id):
-    return CustomAnonymousUser.objects.filter(device_id=device_id).exists()
+    return User()
+    # return CustomAnonymousUser.objects.filter(device_id=device_id).exists()

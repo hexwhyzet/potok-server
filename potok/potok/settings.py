@@ -29,7 +29,7 @@ SECRET_KEY = secrets["django_secret_key"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [config["main_server_ip"], config["grabber_server_url"], "127.0.0.1"]
+ALLOWED_HOSTS = [config["main_server_ip"], config["grabber_server_url"], "127.0.0.1", "localhost"]
 
 LOGGING = {
     'version': 1,
@@ -87,8 +87,18 @@ INSTALLED_APPS = [
     'django_rename_app',
     'potok_app.apps.PotokAppConfig',
     'potok_recommender.apps.PotokRecommenderConfig',
-    # 'oauth2_provider',
+    'potok_users.apps.PotokUsersConfig',
+    'rest_framework',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'potok_users.backends.JWTAuthentication',
+    ),
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -123,23 +133,23 @@ WSGI_APPLICATION = 'potok.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': config['database_name'],
-        'USER': config['database_user'],
-        'PASSWORD': secrets['database_password'],
-        'HOST': config['database_local_url'],
-        'PORT': '',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': config['database_name'],
+#         'USER': config['database_user'],
+#         'PASSWORD': secrets['database_password'],
+#         'HOST': config['database_local_url'],
+#         'PORT': '',
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -188,3 +198,5 @@ LOGIN_URL = '/admin/login/'
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 2621440
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440 * 4
+
+AUTH_USER_MODEL = 'potok_users.User'

@@ -3,7 +3,6 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
 
 MINOR_ID_MAX_LENGTH = 100
 SCREEN_NAME_MAX_LENGTH = 100
@@ -17,7 +16,7 @@ class Profile(models.Model):
     screen_name = models.CharField(max_length=SCREEN_NAME_MAX_LENGTH, null=True, default=None, unique=True, blank=True)
     name = models.CharField(max_length=NAME_MAX_LENGTH, null=True, default=None, blank=True)
     description = models.CharField(max_length=DESCRIPTION_MAX_LENGTH, null=True, default=None, blank=True)
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.SET_NULL, null=True)
     subs = models.ManyToManyField('self', symmetrical=False, through='Subscription', related_name='followers',
                                   blank=True)
     blocked_profiles = models.ManyToManyField('self', symmetrical=False, through='ProfileBlock', blank=True)
@@ -144,21 +143,3 @@ class Link(models.Model):
 class ProfileSuggestion(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     content = models.CharField(max_length=1000, null=True, blank=True)
-
-
-class CustomAnonymousUser(User):
-    activation_token = models.CharField(max_length=100, null=True, blank=True)
-    device_id = models.CharField(max_length=100, null=True, blank=True)
-    prospective_email = models.EmailField()
-    token = models.CharField(max_length=100)
-
-    def __str__(self):
-        return f"Anonymous {self.device_id}"
-
-    class Meta:
-        verbose_name = _("Anonymous user")
-        verbose_name_plural = _("Anonymous users")
-
-
-class CustomUser(User):
-    token = models.CharField(max_length=100)

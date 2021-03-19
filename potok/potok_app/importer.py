@@ -63,11 +63,13 @@ def profiles_json_parser(profiles_json):
         """
     profiles_data = json.loads(profiles_json)
     for profile_data in profiles_data:
-        profile, _ = Profile.objects.update_or_create(
+        profile, created = Profile.objects.update_or_create(
             minor_id=profile_data['source'] + str(abs(int(profile_data['source_profile_id']))),
-            defaults={"user": User.objects.create_user(str(randint(1, 100000000000))),
-                      "name": profile_data['name'],
+            defaults={"name": profile_data['name'],
                       "screen_name": profile_data['screen_name']})
+
+        if created:
+            profile.user = User.objects.create_user(str(randint(1, 100000000000)))
 
         if not profile.avatars.filter(source_url=profile_data['avatar_url']).exists():
             extension = extension_from_url(profile_data['avatar_url'])
