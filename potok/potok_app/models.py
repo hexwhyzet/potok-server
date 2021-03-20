@@ -15,12 +15,18 @@ class Profile(models.Model):
     screen_name = models.CharField(max_length=SCREEN_NAME_MAX_LENGTH, null=True, default=None, unique=True, blank=True)
     name = models.CharField(max_length=NAME_MAX_LENGTH, null=True, default=None, blank=True)
     description = models.CharField(max_length=DESCRIPTION_MAX_LENGTH, null=True, default=None, blank=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.SET_NULL, null=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.SET_NULL, null=True)
     subs = models.ManyToManyField('self', symmetrical=False, through='Subscription', related_name='followers',
                                   blank=True)
     blocked_profiles = models.ManyToManyField('self', symmetrical=False, through='ProfileBlock', blank=True)
     is_public = models.BooleanField(default=True)
     are_liked_pictures_public = models.BooleanField(default=False)
+
+    views_num = models.PositiveIntegerField(default=0)
+    likes_num = models.PositiveIntegerField(default=0)
+    shares_num = models.PositiveIntegerField(default=0)
+    subs_num = models.PositiveIntegerField(default=0)
+    followers_num = models.PositiveIntegerField(default=0)
 
 
 class Avatar(models.Model):
