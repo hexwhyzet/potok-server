@@ -369,37 +369,6 @@ def app_profile(request, user_profile, profile_id):
 
 
 @login_user
-def app_get_app_settings(request, user_profile):
-    settings = [
-        {
-            "name": "Privacy",
-            "type": "header",
-        },
-        {
-            "name": "Pictures privacy",
-            "type": "setting",
-            "format": "single_select",
-            "value": user_profile.is_public,
-            "options": [
-                {
-                    "name": "Public",
-                    "description": "Everyone will see your pictures and can subscribe to you",
-                },
-                {
-                    "name": "Private",
-                    "description": "Only accepted followers will see your pictures.",
-                },
-            ],
-        },
-        {
-            "name": "Change name",
-            "type": "setting",
-            "format": "string",
-        },
-    ]
-
-
-@login_user
 def app_change_setting(request, user_profile: Profile, setting_name, new_value):
     if setting_name == "screen_name":
         if len(new_value) > SCREEN_NAME_MAX_LENGTH:

@@ -43,8 +43,6 @@ urlpatterns = [
     path("app/block_profile/<int:profile_id>", views.app_block_profile),
     path("app/report_picture/<int:picture_id>", views.app_report_picture),
     path("app/profile/<int:profile_id>", views.app_profile),
-    # path("app/get_app_settings", views.app_get_app_settings),
-    # path("app/get_profile_settings", views.app_get_profile_settings),
     path("app/change_setting/<str:setting_name>/<str:new_value>", views.app_change_setting),
     path("app/trending/<int:number>/<int:offset>", views.app_trending),
 
