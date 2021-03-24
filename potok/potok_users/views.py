@@ -3,7 +3,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from potok_users.backends import RegistrationSerializer, LoginSerializer
+from potok_users.backends import RegistrationSerializer, LoginSerializer, AnonymousLoginSerializer, \
+    AnonymousRegistrationSerializer
 
 
 class RegistrationAPIView(APIView):
@@ -12,6 +13,31 @@ class RegistrationAPIView(APIView):
     """
     permission_classes = [AllowAny]
     serializer_class = RegistrationSerializer
+
+    def post(self, request):
+        """
+        Creates a new User object.
+        Username, email, and password are required.
+        Returns a JSON web token.
+        """
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(
+            {
+                'token': serializer.data.get('token', None),
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class AnonymousRegistrationAPIView(APIView):
+    """
+    Registers a new anonymous user.
+    """
+    permission_classes = [AllowAny]
+    serializer_class = AnonymousRegistrationSerializer
 
     def post(self, request):
         """
@@ -47,4 +73,29 @@ class LoginAPIView(APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class AnonymousLoginAPIView(APIView):
+    """
+    Logs in an existing user.
+    """
+    permission_classes = [AllowAny]
+    serializer_class = AnonymousLoginSerializer
+
+    def post(self, request):
+        """
+        Checks is user exists.
+        Email and password are required.
+        Returns a JSON web token.
+        """
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )

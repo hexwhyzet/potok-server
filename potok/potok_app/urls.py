@@ -48,8 +48,6 @@ urlpatterns = [
 
     path("share/<str:share_token>", views.content_by_link),
 
-    path("auth/device_id", views.log_in_via_device_id),
-
     path("send_profiles", views.update_profiles_db),
     path("send_pictures", views.update_pictures_db),
 ]

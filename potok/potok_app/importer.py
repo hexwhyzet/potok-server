@@ -10,7 +10,7 @@ from potok_app.functions import extension_from_url
 from potok_app.models import Picture, Profile
 from potok_app.services.picture import resize_and_upload_picture_to_storage
 from potok_app.services.profile import add_avatar
-from potok_users.models import User
+from potok_users.models import User, UserManager
 
 secrets = Secrets()
 config = Config()
@@ -33,8 +33,8 @@ def pics_json_parser(pictures_json):
         pic_profile, created = Profile.objects.get_or_create(
             minor_id=picture_data['source'] + str(abs(int(picture_data['source_profile_id']))))
 
-        if created:
-            pic_profile.user = User.objects.create_user(str(randint(1, 100000000000)))
+        if created or pic_profile.user is None:
+            pic_profile.user = User.objects.create_empty_user()
 
         picture, created = Picture.objects.get_or_create(profile=pic_profile,
                                                          minor_id=picture_data['source_picture_id'],
@@ -70,13 +70,12 @@ def profiles_json_parser(profiles_json):
             defaults={"name": profile_data['name'],
                       "screen_name": profile_data['screen_name']})
 
-        if created:
-            profile.user = User.objects.create_user(str(randint(1, 100000000000)))
+        if created or profile.user is None:
+            profile.user = User.objects.create_empty_user()
 
         if not profile.avatars.filter(source_url=profile_data['avatar_url']).exists():
             extension = extension_from_url(profile_data['avatar_url'])
             add_avatar(profile=profile,
                        raw_avatar_data=requests.get(profile_data['avatar_url']).content,
                        extension=extension,
-                       res=profile_data['avatar_size'],
                        source_url=profile_data['avatar_url'])

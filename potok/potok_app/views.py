@@ -4,7 +4,7 @@ from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse, HttpResponseNotFound
 from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view
 
 from potok_app.config import Secrets, Config
 from potok_app.functions import is_valid_url, does_contain_only_letters_numbers_underscores
@@ -13,7 +13,7 @@ from potok_app.models import Picture, Profile, Like, Subscription, Comment, Comm
     NAME_MAX_LENGTH, SCREEN_NAME_MAX_LENGTH
 from potok_app.services.actions import switch_like, last_actions, add_view, switch_subscription, comment_by_id, \
     add_comment, comments_of_picture, switch_like_comment, comment_can_be_deleted_by_user, delete_comment, unsubscribe
-from potok_app.services.authorizer import login_user, get_device_id, anonymous_user_exist, \
+from potok_app.services.authorizer import get_device_id, anonymous_user_exist, \
     create_anonymous_user, anonymous_user_by_device_id
 from potok_app.services.link import link_by_share_token, create_link, share_token_by_link
 from potok_app.services.picture import subscription_pictures, feed_pictures, profile_pictures, \
@@ -24,6 +24,7 @@ from potok_app.services.profile import profile_by_id, search_profiles_by_screen_
     update_name, does_screen_name_exists, update_screen_name, update_publicity, update_liked_pictures_publicity, \
     add_avatar, trending_profiles
 from potok_app.services.session import create_session, session_by_token
+from potok_users.authorizer import get_user_profile
 
 secrets = Secrets()
 config = Config()
@@ -72,6 +73,7 @@ def construct_pictures(pictures: list[Picture], user_profile: Profile = None):
 
 
 def construct_profile_response(profile: Profile, user_profile: Profile = None):
+    is_users = is_profile_yours(user_profile, profile)
     response_content = {
         "id": profile.id,
         "type": "profile",
@@ -82,19 +84,19 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
         "is_profile_available": is_profile_available(user_profile, profile) if user_profile is not None else None,
         "are_liked_pictures_available": are_liked_pictures_available(user_profile,
                                                                      profile) if user_profile is not None else None,
-        "name": profile.name or "unknown",
+        "name": profile.name or "No name",
         "screen_name": profile.screen_name or "unknown",
-        "description": profile.description,
+        "description": profile.description or "No description",
         "subs_num": profile.subs.count() if user_profile is not None else None,
         "followers_num": profile.followers.count(),
         "views_num": profile.pics.aggregate(views_num=Coalesce(Sum('views_num'), 0))['views_num'],
         "likes_num": profile.pics.aggregate(likes_num=Coalesce(Sum('likes_num'), 0))['likes_num'],
         "avatar_url": f"{config['image_server_url']}/{config['image_server_bucket']}{avatar_url(profile) or '/defaults/avatar.png'}",
         "is_subscribed": user_profile.subs.filter(id=profile.id).exists() if user_profile is not None else False,
-        "subscribe_url": f"{config['main_server_url']}/app/subscribe/{profile.id}",
+        "subscribe_url": f"{config['main_server_url']}/app/subscribe/{profile.id}" if not is_users else None,
         "share_url": f"{config['main_server_url']}/app/share_profile/{profile.id}",
-        "block_url": f"{config['main_server_url']}/app/block_profile/{profile.id}",
-        "is_yours": is_profile_yours(user_profile, profile),
+        "block_url": f"{config['main_server_url']}/app/block_profile/{profile.id}" if not is_users else None,
+        "is_yours": is_users,
         "reload_url": f"{config['main_server_url']}/app/profile/{profile.id}",
     }
     return response_content
@@ -161,7 +163,8 @@ def construct_action(user_profile, action):
         return construct_subscription_response(user_profile, action)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_create_session_request(request, user_profile):
     session = create_session(user_profile)
     response_content = {
@@ -170,7 +173,8 @@ def app_create_session_request(request, user_profile):
     return construct_app_response("ok", response_content)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_subscription_pictures(request, user_profile, session_token, number):
     session = session_by_token(session_token)
     pictures = subscription_pictures(user_profile, session, number)
@@ -180,7 +184,8 @@ def app_subscription_pictures(request, user_profile, session_token, number):
     return construct_app_response("ok", response_content)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_feed_pictures(request, user_profile, session_token, number):
     session = session_by_token(session_token)
     pictures = feed_pictures(user_profile, session, number)
@@ -190,20 +195,23 @@ def app_feed_pictures(request, user_profile, session_token, number):
     return construct_app_response("ok", response_content)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_my_profile(request, user_profile):
     response_content = construct_profile_response(user_profile, user_profile)
     return construct_app_response("ok", response_content)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_profile_pictures(request, user_profile, profile_id, number=10, offset=0):
     pictures = profile_pictures(profile_id, number, offset)
     response_content = construct_pictures(pictures, user_profile)
     return construct_app_response("ok", response_content)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_liked_pictures(request, user_profile, profile_id, number=10, offset=0):
     profile = profile_by_id(profile_id)
     if (profile == user_profile) or \
@@ -215,8 +223,8 @@ def app_liked_pictures(request, user_profile, profile_id, number=10, offset=0):
         return construct_app_response("liked pictures are private", None)
 
 
-@csrf_exempt
-@login_user
+@api_view(['POST'])
+@get_user_profile
 def app_add_picture(request, user_profile):
     picture_data = base64.b64decode(request.POST["picture"])
     link = request.POST["link"]
@@ -229,22 +237,24 @@ def app_add_picture(request, user_profile):
     return construct_app_response("ok", None)
 
 
-@csrf_exempt
-@login_user
+@api_view(['POST'])
+@get_user_profile
 def app_add_avatar(request, user_profile):
     avatar_data = base64.b64decode(request.POST["avatar"])
     add_avatar(user_profile, avatar_data, request.POST["extension"])
     return construct_app_response("ok", None)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_switch_like(request, user_profile, picture_id):
     picture = picture_by_id(picture_id)
     switch_like(user_profile, picture)
     return construct_app_response("ok", None)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_delete_picture(request, user_profile, picture_id):
     picture = picture_by_id(picture_id)
     if picture_can_be_deleted_by_user(user_profile, picture):
@@ -254,20 +264,23 @@ def app_delete_picture(request, user_profile, picture_id):
     return construct_app_response("Picture can't be deleted", None)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_switch_subscription(request, user_profile, sub_profile_id):
     sub_profile = profile_by_id(profile_id=sub_profile_id)
     switch_subscription(user_profile, sub_profile)
     return construct_app_response("ok", None)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_add_view(request, user_profile, picture_id):
     add_view(user_profile, picture_by_id(picture_id))
     return construct_app_response("ok", None)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_generate_profile_share_link(request, user_profile, profile_id):
     profile = profile_by_id(profile_id)
     link = create_link(user_profile, profile)
@@ -276,7 +289,8 @@ def app_generate_profile_share_link(request, user_profile, profile_id):
     return construct_app_response("ok", response_content)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_generate_picture_share_link(request, user_profile, picture_id):
     picture = picture_by_id(picture_id)
     link = create_link(user_profile, picture)
@@ -285,36 +299,40 @@ def app_generate_picture_share_link(request, user_profile, picture_id):
     return construct_app_response("ok", response_content)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_last_actions(request, user_profile, number, offset):
     actions = last_actions(user_profile, number, offset)
     response_content = [construct_action(user_profile, action) for action in actions]
     return construct_app_response("ok", response_content)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_autofill(request, user_profile, search_string, number, offset):
     profiles = search_profiles_by_screen_name_prefix(search_string, number, offset)
     response_content = construct_profiles(profiles, user_profile)
     return construct_app_response("ok", response_content)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_search(request, user_profile, search_string, number, offset):
     profiles = search_profiles_by_text(search_string, number, offset)
     response_content = construct_profiles(profiles, user_profile)
     return construct_app_response("ok", response_content)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_like_comment(request, user_profile, comment_id):
     comment = comment_by_id(comment_id)
     switch_like_comment(profile=user_profile, comment=comment)
     return construct_app_response("ok", None)
 
 
-@csrf_exempt
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_add_comment(request, user_profile, picture_id):
     text = request.POST["content"]
     picture = picture_by_id(picture_id)
@@ -322,7 +340,8 @@ def app_add_comment(request, user_profile, picture_id):
     return construct_app_response("ok", None)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_delete_comment(request, user_profile, comment_id):
     comment = comment_by_id(comment_id)
     if comment_can_be_deleted_by_user(user_profile, comment):
@@ -332,7 +351,8 @@ def app_delete_comment(request, user_profile, comment_id):
     return construct_app_response("Comment can't be deleted", None)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_picture_comments(request, user_profile, picture_id, number, offset):
     picture = picture_by_id(picture_id)
     comments = comments_of_picture(picture, number, offset)
@@ -342,7 +362,8 @@ def app_picture_comments(request, user_profile, picture_id, number, offset):
     return construct_app_response("ok", response_content)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_block_profile(request, user_profile, profile_id):
     block_profile = profile_by_id(profile_id)
     unsubscribe(user_profile, block_profile)
@@ -354,21 +375,24 @@ def app_block_profile(request, user_profile, profile_id):
     return construct_app_response("ok", None)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_report_picture(request, user_profile, picture_id):
     picture = picture_by_id(picture_id)
     add_report(user_profile, picture)
     return construct_app_response("ok", None)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_profile(request, user_profile, profile_id):
     profile = profile_by_id(profile_id)
     response_content = construct_profile_response(profile, user_profile)
     return construct_app_response("ok", response_content)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_change_setting(request, user_profile: Profile, setting_name, new_value):
     if setting_name == "screen_name":
         if len(new_value) > SCREEN_NAME_MAX_LENGTH:
@@ -398,15 +422,16 @@ def app_change_setting(request, user_profile: Profile, setting_name, new_value):
         return construct_app_response("ok", None)
 
 
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_trending(request, user_profile, number, offset):
     profiles = trending_profiles(number, offset)
     response = construct_profiles(profiles, user_profile)
     return construct_app_response("ok", response)
 
 
-@csrf_exempt
-@login_user
+@api_view(['GET'])
+@get_user_profile
 def app_suggest_profile(request, user_profile):
     url = request.POST["content"]
     if not is_valid_url(url):
@@ -416,14 +441,12 @@ def app_suggest_profile(request, user_profile):
     return construct_app_response("ok", None)
 
 
-@csrf_exempt
 def update_pictures_db(request):
     post_json = request.POST["archive"]
     pics_json_parser(post_json)
     return construct_app_response("ok", None)
 
 
-@csrf_exempt
 def update_profiles_db(request):
     post_json = request.POST["archive"]
     profiles_json_parser(post_json)

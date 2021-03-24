@@ -8,6 +8,9 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
+from potok_app.models import Profile
+from potok_app.services.profile import generate_unique_screen_name
+
 
 class UserManager(BaseUserManager):
     """
@@ -21,21 +24,21 @@ class UserManager(BaseUserManager):
     для создания объектов `User`.
     """
 
-    def _create_user(self, username, email, password=None, **extra_fields):
-        if not username:
-            raise ValueError('Указанное имя пользователя должно быть установлено')
-
+    def _create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('Данный адрес электронной почты должен быть установлен')
 
         email = self.normalize_email(email)
-        user = self.model(username=username, email=email, **extra_fields)
+        user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
 
+        profile = Profile(user=user, screen_name=generate_unique_screen_name())
+        profile.save()
+
         return user
 
-    def create_user(self, username, email, password=None, **extra_fields):
+    def create_user(self, email, password=None, **extra_fields):
         """
         Создает и возвращает `User` с адресом электронной почты,
         именем пользователя и паролем.
@@ -43,9 +46,24 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
 
-        return self._create_user(username, email, password, **extra_fields)
+        return self._create_user(email, password, **extra_fields)
 
-    def create_superuser(self, username, email, password, **extra_fields):
+    def create_anonymous_user(self, device_id, **extra_fields):
+        """
+        Создает и возвращает анонимного `User` с кодом устройства
+        """
+        if not device_id:
+            raise ValueError('Код устройства должен быть установлен')
+
+        user = self.model(device_id=device_id, **extra_fields)
+        user.save(using=self._db)
+
+        profile = Profile(user=user)
+        profile.save()
+
+        return user
+
+    def create_superuser(self, email, password, **extra_fields):
         """
         Создает и возвращает пользователя с правами
         суперпользователя (администратора).
@@ -59,22 +77,30 @@ class UserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Суперпользователь должен иметь is_superuser=True.')
 
-        return self._create_user(username, email, password, **extra_fields)
+        return self._create_user(email, password, **extra_fields)
+
+    def create_empty_user(self):
+        user = self.model()
+        user.save(using=self._db)
+        return user
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+    id = models.BigAutoField(primary_key=True)
     is_verified = models.BooleanField(
         _('verified'),
         default=False,
         help_text=_(
-            'Designates whether this user verified his account or it is anonymous.'
+            'Designates whether this user verified his account.'
         ),
     )
     email = models.EmailField(
         _('email address'),
         blank=True,
+        null=True,
         unique=True,
     )
+    is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(
         _('active'),
         default=True,
@@ -92,11 +118,27 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=100,
         null=True,
         default=None,
+        unique=True,
     )
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
+
+    objects = UserManager()
+
+    def __str__(self):
+        """
+        Возвращает строковое представление этого `User`.
+        Эта строка используется, когда в консоли выводится `User`.
+        """
+        if self.email:
+            return self.email
+
+        if not self.is_verified and not self.is_staff and self.device_id:
+            return self.device_id
+
+        return "id" + str(self.id)
 
     @property
     def token(self):
@@ -117,7 +159,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         Поскольку мы не храним настоящее имя пользователя,
         мы возвращаем его имя пользователя.
         """
-        return self.username
+        return self.email
 
     def get_short_name(self):
         """
@@ -127,7 +169,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         Поскольку мы не храним настоящее имя пользователя,
         мы возвращаем его имя пользователя.
         """
-        return self.username
+        return self.email
 
     def _generate_jwt_token(self):
         """
@@ -139,7 +181,58 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         token = jwt.encode({
             'id': self.pk,
-            'exp': int(dt.strftime('%s'))
+            'exp': dt.utcfromtimestamp(dt.timestamp()),
         }, settings.SECRET_KEY, algorithm='HS256')
 
-        return token.decode('utf-8')
+        return token
+
+# class Verification(models.Model):
+#     def _generate_jwt_token(self):
+#         """
+#         Создает веб-токен JSON, в котором хранится идентификатор
+#         этого пользователя и срок его действия
+#         составляет 60 дней в будущем.
+#         """
+#         dt = datetime.now() + timedelta(days=60)
+#
+#         token = jwt.encode({
+#             'id': self.pk,
+#             'exp': dt.utcfromtimestamp(dt.timestamp()),
+#         }, settings.SECRET_KEY, algorithm='HS256')
+#
+#         return token
+#
+#     @abstractmethod
+#     def verify(self):
+#         """
+#         Function that should be called after change will be confirmed
+#         """
+#
+#
+# class InitialEmail(Verification):
+#     email = models.EmailField(
+#         _('email address'),
+#         blank=True,
+#         null=True,
+#         unique=True,
+#     )
+#
+#
+# class ChangeEmail(Verification):
+#     old_email = models.EmailField(
+#         _('email address'),
+#         blank=True,
+#         null=True,
+#         unique=True,
+#     )
+#     email = models.EmailField(
+#         _('email address'),
+#         blank=True,
+#         null=True,
+#         unique=True,
+#     )
+#
+#
+# class ChangePassword(Verification):
+#     old_password = models.CharField(_('password'), max_length=128)
+#     password = models.CharField(_('password'), max_length=128)

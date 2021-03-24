@@ -26,7 +26,6 @@ def random_generate_tickets(profile: Profile, number: int):
 
 
 def random_tickets(profile: Profile, number: int):
-    print(Ticket.objects.filter(is_issued=False, profile=profile))
     tickets = not_issued_tickets(profile).order_by("date_created")[:number]
     for ticket in tickets:
         ticket.is_issued = True

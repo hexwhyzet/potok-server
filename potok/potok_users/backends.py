@@ -2,6 +2,7 @@ import jwt
 from django.conf import settings
 from django.contrib.auth import authenticate
 from rest_framework import authentication, exceptions, serializers
+from rest_framework.validators import UniqueValidator
 
 from .models import User
 
@@ -75,7 +76,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
         successful, return the user and token. If not, throw an error.
         """
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY)
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms='HS256')
         except:
             msg = 'Invalid authentication. Could not decode token.'
             raise exceptions.AuthenticationFailed(msg)
@@ -113,10 +114,32 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'username', 'password', 'token',)
+        fields = ('email', 'password', 'token',)
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
+
+
+class AnonymousRegistrationSerializer(serializers.ModelSerializer):
+    """
+    Creates a new anonymous user.
+    Device id is required.
+    Returns a JSON web token.
+    """
+
+    device_id = serializers.CharField(max_length=200, validators=[
+        UniqueValidator(queryset=User.objects.all(), message='User with this device id is already exist')])
+
+    # The client should not be able to send a token along with a registration
+    # request. Making `token` read-only handles that for us.
+    token = serializers.CharField(max_length=255, read_only=True)
+
+    class Meta:
+        model = User
+        fields = ('device_id', 'token',)
+
+    def create(self, validated_data):
+        return User.objects.create_anonymous_user(**validated_data)
 
 
 class LoginSerializer(serializers.Serializer):
@@ -129,7 +152,6 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=128, write_only=True)
 
     # Ignore these fields if they are included in the request.
-    username = serializers.CharField(max_length=255, read_only=True)
     token = serializers.CharField(max_length=255, read_only=True)
 
     def validate(self, data):
@@ -149,7 +171,7 @@ class LoginSerializer(serializers.Serializer):
                 'A password is required to log in.'
             )
 
-        user = authenticate(username=email, password=password)
+        user = authenticate(email=email, password=password)
 
         if user is None:
             raise serializers.ValidationError(
@@ -159,6 +181,40 @@ class LoginSerializer(serializers.Serializer):
         if not user.is_active:
             raise serializers.ValidationError(
                 'This user has been deactivated.'
+            )
+
+        return {
+            'token': user.token,
+        }
+
+
+class AnonymousLoginSerializer(serializers.Serializer):
+    """
+    Authenticates anonymous account.
+    Device id is required.
+    Returns a JSON web token.
+    """
+    device_id = serializers.CharField(max_length=200, write_only=True)
+
+    # Ignore these fields if they are included in the request.
+    token = serializers.CharField(max_length=255, read_only=True)
+
+    def validate(self, data):
+        """
+        Validates user data.
+        """
+        device_id = data.get('device_id', None)
+
+        if device_id is None:
+            raise serializers.ValidationError(
+                'A device id is required'
+            )
+
+        user = User.objects.filter(device_id=device_id).filter(is_verified=False).first()
+
+        if user is None:
+            raise serializers.ValidationError(
+                'A user with this  device id is not found'
             )
 
         return {

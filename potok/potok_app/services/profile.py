@@ -1,5 +1,6 @@
 from django.contrib.postgres.search import TrigramSimilarity, SearchVector, SearchQuery, SearchRank
 from django.db.models import Count
+from random_username.generate import generate_username
 
 from potok_app.config import Secrets, Config
 from potok_app.functions import id_gen
@@ -26,7 +27,6 @@ def search_profiles_by_screen_name_prefix(prefix, number, offset):
 #            offset:offset + number]
 
 def search_profiles_by_text(text, number, offset):
-
     name_rank = SearchRank(SearchVector('name'), SearchQuery(text)) * 8
 
     trigram_similarity = TrigramSimilarity('screen_name', text)
@@ -127,3 +127,11 @@ def trending_profiles(number, offset):
     profiles = Profile.objects.annotate(pics_num=Count('pics')).filter(pics_num__gt=0).annotate(
         trend_rank=Count('followers')).order_by('-trend_rank').all()[offset:offset + number]
     return profiles
+
+
+def generate_unique_screen_name():
+    screen_name = generate_username()[0]
+    while Profile.objects.filter(screen_name=screen_name).exists():
+        screen_name = generate_username()[0]
+
+    return screen_name
