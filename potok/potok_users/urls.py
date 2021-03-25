@@ -1,6 +1,7 @@
 from django.urls import path
 
-from potok_users.views import RegistrationAPIView, LoginAPIView, AnonymousLoginAPIView, AnonymousRegistrationAPIView
+from potok_users.views import RegistrationAPIView, LoginAPIView, AnonymousLoginAPIView, AnonymousRegistrationAPIView, \
+    is_logged
 
 urlpatterns = [
     path('app/registration',
@@ -18,4 +19,6 @@ urlpatterns = [
     path('app/anonymous_login',
          AnonymousLoginAPIView.as_view(),
          name='anonymous_user_login'),
+
+    path('app/is_logged', is_logged),
 ]

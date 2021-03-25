@@ -13,8 +13,6 @@ from potok_app.models import Picture, Profile, Like, Subscription, Comment, Comm
     NAME_MAX_LENGTH, SCREEN_NAME_MAX_LENGTH
 from potok_app.services.actions import switch_like, last_actions, add_view, switch_subscription, comment_by_id, \
     add_comment, comments_of_picture, switch_like_comment, comment_can_be_deleted_by_user, delete_comment, unsubscribe
-from potok_app.services.authorizer import get_device_id, anonymous_user_exist, \
-    create_anonymous_user, anonymous_user_by_device_id
 from potok_app.services.link import link_by_share_token, create_link, share_token_by_link
 from potok_app.services.picture import subscription_pictures, feed_pictures, profile_pictures, \
     picture_by_id, liked_pictures, high_resolution_url, mid_resolution_url, low_resolution_url, add_picture, \
@@ -86,7 +84,7 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
                                                                      profile) if user_profile is not None else None,
         "name": profile.name or "No name",
         "screen_name": profile.screen_name or "unknown",
-        "description": profile.description or "No description",
+        "description": profile.description or None,
         "subs_num": profile.subs.count() if user_profile is not None else None,
         "followers_num": profile.followers.count(),
         "views_num": profile.pics.aggregate(views_num=Coalesce(Sum('views_num'), 0))['views_num'],
@@ -170,7 +168,7 @@ def app_create_session_request(request, user_profile):
     response_content = {
         "session_token": session.token,
     }
-    return construct_app_response("ok", response_content)
+    return construct_app_response(200, response_content)
 
 
 @api_view(['GET'])
@@ -181,7 +179,7 @@ def app_subscription_pictures(request, user_profile, session_token, number):
     response_content = construct_pictures(pictures, user_profile)
     # if len(response_content) > 0:
     #     response_content += [construct_ads_response()]
-    return construct_app_response("ok", response_content)
+    return construct_app_response(200, response_content)
 
 
 @api_view(['GET'])
@@ -192,14 +190,14 @@ def app_feed_pictures(request, user_profile, session_token, number):
     response_content = construct_pictures(pictures, user_profile)
     # if len(response_content) > 0:
     #     response_content += [construct_ads_response()]
-    return construct_app_response("ok", response_content)
+    return construct_app_response(200, response_content)
 
 
 @api_view(['GET'])
 @get_user_profile
 def app_my_profile(request, user_profile):
     response_content = construct_profile_response(user_profile, user_profile)
-    return construct_app_response("ok", response_content)
+    return construct_app_response(200, response_content)
 
 
 @api_view(['GET'])
@@ -207,7 +205,7 @@ def app_my_profile(request, user_profile):
 def app_profile_pictures(request, user_profile, profile_id, number=10, offset=0):
     pictures = profile_pictures(profile_id, number, offset)
     response_content = construct_pictures(pictures, user_profile)
-    return construct_app_response("ok", response_content)
+    return construct_app_response(200, response_content)
 
 
 @api_view(['GET'])
@@ -218,7 +216,7 @@ def app_liked_pictures(request, user_profile, profile_id, number=10, offset=0):
             (profile.are_liked_videos_public and (profile.is_public or are_fiends(profile, user_profile))):
         pictures = liked_pictures(profile_id, number, offset)
         response_content = construct_pictures(pictures, user_profile)
-        return construct_app_response("ok", response_content)
+        return construct_app_response(200, response_content)
     else:
         return construct_app_response("liked pictures are private", None)
 
@@ -234,7 +232,7 @@ def app_add_picture(request, user_profile):
     else:
         link = None
     add_picture(user_profile, picture_data, request.POST["extension"], link)
-    return construct_app_response("ok", None)
+    return construct_app_response(200, None)
 
 
 @api_view(['POST'])
@@ -242,7 +240,7 @@ def app_add_picture(request, user_profile):
 def app_add_avatar(request, user_profile):
     avatar_data = base64.b64decode(request.POST["avatar"])
     add_avatar(user_profile, avatar_data, request.POST["extension"])
-    return construct_app_response("ok", None)
+    return construct_app_response(200, None)
 
 
 @api_view(['GET'])
@@ -250,7 +248,7 @@ def app_add_avatar(request, user_profile):
 def app_switch_like(request, user_profile, picture_id):
     picture = picture_by_id(picture_id)
     switch_like(user_profile, picture)
-    return construct_app_response("ok", None)
+    return construct_app_response(200, None)
 
 
 @api_view(['GET'])
@@ -259,7 +257,7 @@ def app_delete_picture(request, user_profile, picture_id):
     picture = picture_by_id(picture_id)
     if picture_can_be_deleted_by_user(user_profile, picture):
         delete_picture(picture)
-        return construct_app_response("ok", None)
+        return construct_app_response(200, None)
 
     return construct_app_response("Picture can't be deleted", None)
 
@@ -269,14 +267,14 @@ def app_delete_picture(request, user_profile, picture_id):
 def app_switch_subscription(request, user_profile, sub_profile_id):
     sub_profile = profile_by_id(profile_id=sub_profile_id)
     switch_subscription(user_profile, sub_profile)
-    return construct_app_response("ok", None)
+    return construct_app_response(200, None)
 
 
 @api_view(['GET'])
 @get_user_profile
 def app_add_view(request, user_profile, picture_id):
     add_view(user_profile, picture_by_id(picture_id))
-    return construct_app_response("ok", None)
+    return construct_app_response(200, None)
 
 
 @api_view(['GET'])
@@ -286,7 +284,7 @@ def app_generate_profile_share_link(request, user_profile, profile_id):
     link = create_link(user_profile, profile)
     share_token = share_token_by_link(link)
     response_content = {"share_url": f"{config['main_server_url']}/share/{share_token}"}
-    return construct_app_response("ok", response_content)
+    return construct_app_response(200, response_content)
 
 
 @api_view(['GET'])
@@ -296,7 +294,7 @@ def app_generate_picture_share_link(request, user_profile, picture_id):
     link = create_link(user_profile, picture)
     share_token = share_token_by_link(link)
     response_content = {"share_url": f"{config['main_server_url']}/share/{share_token}"}
-    return construct_app_response("ok", response_content)
+    return construct_app_response(200, response_content)
 
 
 @api_view(['GET'])
@@ -304,7 +302,7 @@ def app_generate_picture_share_link(request, user_profile, picture_id):
 def app_last_actions(request, user_profile, number, offset):
     actions = last_actions(user_profile, number, offset)
     response_content = [construct_action(user_profile, action) for action in actions]
-    return construct_app_response("ok", response_content)
+    return construct_app_response(200, response_content)
 
 
 @api_view(['GET'])
@@ -312,7 +310,7 @@ def app_last_actions(request, user_profile, number, offset):
 def app_autofill(request, user_profile, search_string, number, offset):
     profiles = search_profiles_by_screen_name_prefix(search_string, number, offset)
     response_content = construct_profiles(profiles, user_profile)
-    return construct_app_response("ok", response_content)
+    return construct_app_response(200, response_content)
 
 
 @api_view(['GET'])
@@ -320,7 +318,7 @@ def app_autofill(request, user_profile, search_string, number, offset):
 def app_search(request, user_profile, search_string, number, offset):
     profiles = search_profiles_by_text(search_string, number, offset)
     response_content = construct_profiles(profiles, user_profile)
-    return construct_app_response("ok", response_content)
+    return construct_app_response(200, response_content)
 
 
 @api_view(['GET'])
@@ -328,16 +326,16 @@ def app_search(request, user_profile, search_string, number, offset):
 def app_like_comment(request, user_profile, comment_id):
     comment = comment_by_id(comment_id)
     switch_like_comment(profile=user_profile, comment=comment)
-    return construct_app_response("ok", None)
+    return construct_app_response(200, None)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @get_user_profile
 def app_add_comment(request, user_profile, picture_id):
     text = request.POST["content"]
     picture = picture_by_id(picture_id)
     add_comment(profile=user_profile, picture=picture, text=text)
-    return construct_app_response("ok", None)
+    return construct_app_response(200, None)
 
 
 @api_view(['GET'])
@@ -346,7 +344,7 @@ def app_delete_comment(request, user_profile, comment_id):
     comment = comment_by_id(comment_id)
     if comment_can_be_deleted_by_user(user_profile, comment):
         delete_comment(comment)
-        return construct_app_response("ok", None)
+        return construct_app_response(200, None)
 
     return construct_app_response("Comment can't be deleted", None)
 
@@ -359,7 +357,7 @@ def app_picture_comments(request, user_profile, picture_id, number, offset):
     comments = list(sorted(sorted(comments, key=lambda comment: comment.likes_num, reverse=True),
                            key=lambda comment: comment.profile == user_profile, reverse=True))
     response_content = construct_comments(user_profile, comments)
-    return construct_app_response("ok", response_content)
+    return construct_app_response(200, response_content)
 
 
 @api_view(['GET'])
@@ -372,7 +370,7 @@ def app_block_profile(request, user_profile, profile_id):
         return construct_app_response("You cannot block yourself", None)
 
     switch_block(user_profile, block_profile)
-    return construct_app_response("ok", None)
+    return construct_app_response(200, None)
 
 
 @api_view(['GET'])
@@ -380,7 +378,7 @@ def app_block_profile(request, user_profile, profile_id):
 def app_report_picture(request, user_profile, picture_id):
     picture = picture_by_id(picture_id)
     add_report(user_profile, picture)
-    return construct_app_response("ok", None)
+    return construct_app_response(200, None)
 
 
 @api_view(['GET'])
@@ -388,7 +386,7 @@ def app_report_picture(request, user_profile, picture_id):
 def app_profile(request, user_profile, profile_id):
     profile = profile_by_id(profile_id)
     response_content = construct_profile_response(profile, user_profile)
-    return construct_app_response("ok", response_content)
+    return construct_app_response(200, response_content)
 
 
 @api_view(['GET'])
@@ -402,24 +400,24 @@ def app_change_setting(request, user_profile: Profile, setting_name, new_value):
         if does_screen_name_exists(new_value):
             return construct_app_response("The username is already taken", None)
         update_screen_name(user_profile, new_value)
-        return construct_app_response("ok", None)
+        return construct_app_response(200, None)
     elif setting_name == "name":
         if len(new_value) > NAME_MAX_LENGTH:
             return construct_app_response("error", f"Name should be shorter than {NAME_MAX_LENGTH} letters")
         update_name(user_profile, new_value)
-        return construct_app_response("ok", None)
+        return construct_app_response(200, None)
     elif setting_name == "is_public":
         if str(new_value) == "0":
             update_publicity(user_profile, False)
         else:
             update_publicity(user_profile, True)
-        return construct_app_response("ok", None)
+        return construct_app_response(200, None)
     elif setting_name == "are_liked_pictures_public":
         if str(new_value) == "0":
             update_liked_pictures_publicity(user_profile, False)
         else:
             update_liked_pictures_publicity(user_profile, True)
-        return construct_app_response("ok", None)
+        return construct_app_response(200, None)
 
 
 @api_view(['GET'])
@@ -427,10 +425,10 @@ def app_change_setting(request, user_profile: Profile, setting_name, new_value):
 def app_trending(request, user_profile, number, offset):
     profiles = trending_profiles(number, offset)
     response = construct_profiles(profiles, user_profile)
-    return construct_app_response("ok", response)
+    return construct_app_response(200, response)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @get_user_profile
 def app_suggest_profile(request, user_profile):
     url = request.POST["content"]
@@ -438,19 +436,19 @@ def app_suggest_profile(request, user_profile):
         return construct_app_response("error", "Url is invalid")
 
     ProfileSuggestion.objects.create(profile=user_profile, content=url)
-    return construct_app_response("ok", None)
+    return construct_app_response(200, None)
 
 
 def update_pictures_db(request):
     post_json = request.POST["archive"]
     pics_json_parser(post_json)
-    return construct_app_response("ok", None)
+    return construct_app_response(200, None)
 
 
 def update_profiles_db(request):
     post_json = request.POST["archive"]
     profiles_json_parser(post_json)
-    return construct_app_response("ok", None)
+    return construct_app_response(200, None)
 
 
 def content_by_link(request, share_token: str):
@@ -460,15 +458,6 @@ def content_by_link(request, share_token: str):
         return render(request, 'share.html', {"picture": response_content})
     elif isinstance(link.content, Profile):
         response_content = construct_profile_response(link.content)
-        return construct_app_response("ok", response_content)
+        return construct_app_response(200, response_content)
     else:
         return HttpResponseNotFound("Meme not Found :(")
-
-
-def log_in_via_device_id(request):
-    device_id = get_device_id(request)
-    if not anonymous_user_exist(device_id):
-        anonymous_user = create_anonymous_user(device_id)
-    else:
-        anonymous_user = anonymous_user_by_device_id(device_id)
-    return construct_app_response("ok", {"auth_token": anonymous_user.token})

@@ -1,6 +1,5 @@
 import json
 from datetime import datetime
-from random import randint
 
 import pytz
 import requests
@@ -10,7 +9,7 @@ from potok_app.functions import extension_from_url
 from potok_app.models import Picture, Profile
 from potok_app.services.picture import resize_and_upload_picture_to_storage
 from potok_app.services.profile import add_avatar
-from potok_users.models import User, UserManager
+from potok_users.models import User
 
 secrets = Secrets()
 config = Config()

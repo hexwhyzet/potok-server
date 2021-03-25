@@ -210,12 +210,20 @@ class AnonymousLoginSerializer(serializers.Serializer):
                 'A device id is required'
             )
 
-        user = User.objects.filter(device_id=device_id).filter(is_verified=False).first()
-
-        if user is None:
+        if User.objects.filter(device_id=device_id).filter(is_verified=True).exists():
             raise serializers.ValidationError(
-                'A user with this  device id is not found'
+                'This device id is already registered'
             )
+
+        if not User.objects.filter(device_id=device_id).exists():
+            user = User.objects.create_anonymous_user(device_id=device_id)
+        else:
+            user = User.objects.filter(device_id=device_id).filter(is_verified=False).first()
+
+        # if user is None:
+        #     raise serializers.ValidationError(
+        #         'A user with this  device id is not found'
+        #     )
 
         return {
             'token': user.token,

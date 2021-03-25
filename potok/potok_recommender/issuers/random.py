@@ -14,7 +14,8 @@ def random_process_issue(profile: Profile, number):
 def random_generate_tickets(profile: Profile, number: int):
     issuer, _ = Issuer.objects.get_or_create(name="random")
     pictures = Picture.objects.exclude(profile__is_public=False).exclude(profiles_viewed=profile).exclude().exclude(
-        profile__id=profile.id).exclude(profile__in=profile.blocked_profiles.all()).exclude(pk__in=[p.picture.pk for p in profile.tickets.all()]).order_by("-date")[:number]
+        profile__id=profile.id).exclude(profile__in=profile.blocked_profiles.all()).exclude(
+        pk__in=[p.picture.pk for p in profile.tickets.all()]).order_by("-date")[:number]
     for picture in pictures:
         ticket = Ticket.objects.create(
             picture=picture,
