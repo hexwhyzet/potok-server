@@ -32,8 +32,9 @@ def pics_json_parser(pictures_json):
         pic_profile, created = Profile.objects.get_or_create(
             minor_id=picture_data['source'] + str(abs(int(picture_data['source_profile_id']))))
 
-        if created or pic_profile.user is None:
+        if pic_profile.user is None:
             pic_profile.user = User.objects.create_empty_user()
+            pic_profile.save()
 
         picture, created = Picture.objects.get_or_create(profile=pic_profile,
                                                          minor_id=picture_data['source_picture_id'],
@@ -69,8 +70,9 @@ def profiles_json_parser(profiles_json):
             defaults={"name": profile_data['name'],
                       "screen_name": profile_data['screen_name']})
 
-        if created or profile.user is None:
+        if profile.user is None:
             profile.user = User.objects.create_empty_user()
+            pic_profile.save()
 
         if not profile.avatars.filter(source_url=profile_data['avatar_url']).exists():
             extension = extension_from_url(profile_data['avatar_url'])
