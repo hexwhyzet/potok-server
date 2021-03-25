@@ -72,7 +72,7 @@ def profiles_json_parser(profiles_json):
 
         if profile.user is None:
             profile.user = User.objects.create_empty_user()
-            pic_profile.save()
+            profile.save()
 
         if not profile.avatars.filter(source_url=profile_data['avatar_url']).exists():
             extension = extension_from_url(profile_data['avatar_url'])
