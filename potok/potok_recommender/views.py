@@ -5,7 +5,8 @@ from rest_framework.decorators import api_view
 
 from potok_app.models import Profile
 from potok_app.services.profile import profile_by_id
-from potok_app.views import construct_app_response, construct_picture_response, construct_profile_response
+from potok_app.views import construct_app_response, construct_picture_response, construct_profile_response, \
+    construct_ads_response
 from potok_recommender.models import Ticket
 from potok_recommender.services.issuer import get_issuer
 from potok_recommender.services.ticket import update_ticket
@@ -61,7 +62,7 @@ def refresh_issued_tickets(profile_id: int):
 def app_tickets(request, user_profile, number):
     tickets = issue_tickets_by_profile(user_profile, number)
     constructed_response = construct_tickets(tickets, user_profile)
-    return construct_app_response(200, constructed_response)
+    return construct_app_response(200, constructed_response + [construct_ads_response()])
 
 
 @api_view(['POST'])

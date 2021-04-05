@@ -31,9 +31,9 @@ class PotokJSONRenderer(JSONRenderer):
             "status": status_code,
         }
 
-        for exception_header in ["detail"]:
+        for exception_header in ["detail", "non_field_errors"]:
             if exception_header in data:
-                response[exception_header] = data[exception_header]
+                response["detail"] = data[exception_header]
                 del data[exception_header]
 
         response["content"] = data or None

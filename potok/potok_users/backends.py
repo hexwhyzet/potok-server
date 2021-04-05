@@ -1,10 +1,23 @@
+from string import ascii_lowercase, ascii_uppercase, digits
+
 import jwt
+from MailChecker import MailChecker
 from django.conf import settings
 from django.contrib.auth import authenticate
+from django.core.mail import send_mail
 from rest_framework import authentication, exceptions, serializers
 from rest_framework.validators import UniqueValidator
 
-from .models import User
+from potok_users.exceptions import InvalidEmail, PasswordIsTooShort, PasswordIsTooLong, PasswordContainsInvalidCharacters, \
+    NoUserFound, UserIsInactive
+from .config import Config
+from .models import User, VerificationCode
+
+config = Config()
+
+MAX_PASSWORD_LENGTH = 128
+MIN_PASSWORD_LENGTH = 8
+PASSWORD_CHARACTERS = ascii_lowercase + ascii_uppercase + digits + "~`!@#$%^&*()_-+={[}]|\:;\"'<,>.?/"
 
 
 class JWTAuthentication(authentication.BaseAuthentication):
@@ -100,11 +113,14 @@ class RegistrationSerializer(serializers.ModelSerializer):
     Email, username, and password are required.
     Returns a JSON web token.
     """
-
+    code = serializers.CharField(
+        max_length=100,
+        write_only=True,
+    )
     # The password must be validated and should not be read by the client
     password = serializers.CharField(
-        max_length=128,
-        min_length=8,
+        max_length=MAX_PASSWORD_LENGTH,
+        min_length=MIN_PASSWORD_LENGTH,
         write_only=True,
     )
 
@@ -114,10 +130,54 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'password', 'token',)
+        fields = ('email', 'password', 'token', 'code',)
+
+    def validate(self, data):
+        email = data.get('email', None)
+        code = data.get('code', None)
+
+        if email is None:
+            raise serializers.ValidationError(
+                'An email address is required to register.'
+            )
+
+        if code is None:
+            raise serializers.ValidationError(
+                'A code is required to register.'
+            )
+
+        if not VerificationCode.objects.filter(email=email, code=code).exists():
+            raise exceptions.AuthenticationFailed('Invalid verification code.')
+
+        return data
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
+
+
+class ValidateCredentialsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('email', 'password',)
+
+    def validate(self, data):
+        email = data.get('email', None)
+        password = data.get('password', None)
+
+        if not MailChecker.is_valid(email):
+            raise InvalidEmail()
+
+        for letter in password:
+            if letter not in PASSWORD_CHARACTERS:
+                raise PasswordContainsInvalidCharacters()
+
+        if len(password) < MIN_PASSWORD_LENGTH or len(password) > MAX_PASSWORD_LENGTH:
+            if len(password) < 8:
+                raise PasswordIsTooShort()
+            else:
+                raise PasswordIsTooLong()
+
+        return data
 
 
 class AnonymousRegistrationSerializer(serializers.ModelSerializer):
@@ -149,7 +209,7 @@ class LoginSerializer(serializers.Serializer):
     Returns a JSON web token.
     """
     email = serializers.EmailField(write_only=True)
-    password = serializers.CharField(max_length=128, write_only=True)
+    password = serializers.CharField(max_length=MAX_PASSWORD_LENGTH, write_only=True)
 
     # Ignore these fields if they are included in the request.
     token = serializers.CharField(max_length=255, read_only=True)
@@ -174,14 +234,10 @@ class LoginSerializer(serializers.Serializer):
         user = authenticate(email=email, password=password)
 
         if user is None:
-            raise serializers.ValidationError(
-                'A user with this email and password was not found.'
-            )
+            raise NoUserFound()
 
         if not user.is_active:
-            raise serializers.ValidationError(
-                'This user has been deactivated.'
-            )
+            raise UserIsInactive()
 
         return {
             'token': user.token,
@@ -228,3 +284,48 @@ class AnonymousLoginSerializer(serializers.Serializer):
         return {
             'token': user.token,
         }
+
+
+class InitiateVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField(write_only=True)
+
+    class Meta:
+        model = VerificationCode
+        fields = ('email', 'code',)
+
+    def create(self, validated_data):
+        """
+        Validates user data.
+        """
+        email = validated_data.get('email', None)
+
+        if email is None:
+            raise serializers.ValidationError(
+                'Missing email data'
+            )
+
+        if User.objects.filter(email=email, is_verified=True).exists():
+            raise serializers.ValidationError(
+                'User with this email is already registered'
+            )
+
+        VerificationCode.objects.filter(email=email).delete()
+
+        code = VerificationCode.objects.create_code(email=email)
+
+        send_mail(
+            "Email verification",
+            f"""
+  Hello! 
+  Thank you for your registration in Potok. Please use the code below to verificate your email:
+
+  {code.code}
+
+  Thanks!
+ 
+  Potok team
+            """,
+            config["email_host_user"],
+            [email],
+        )
+        return code

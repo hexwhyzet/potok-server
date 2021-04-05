@@ -1,4 +1,6 @@
+import random
 from datetime import datetime, timedelta
+from string import digits
 
 import jwt
 from django.conf import settings
@@ -38,11 +40,14 @@ class UserManager(BaseUserManager):
 
         return user
 
-    def create_user(self, email, password=None, **extra_fields):
+    def create_user(self, email, code=None, password=None, **extra_fields):
         """
         Создает и возвращает `User` с адресом электронной почты,
         именем пользователя и паролем.
         """
+
+        VerificationCode.objects.filter(email=email, code=code).delete()
+
         extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
 
@@ -186,6 +191,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         return token
 
+
 # class Verification(models.Model):
 #     def _generate_jwt_token(self):
 #         """
@@ -236,3 +242,30 @@ class User(AbstractBaseUser, PermissionsMixin):
 # class ChangePassword(Verification):
 #     old_password = models.CharField(_('password'), max_length=128)
 #     password = models.CharField(_('password'), max_length=128)
+
+
+class VerificationCodeManager(models.Manager):
+    CODE_LENGTH = 6
+
+    def generate_code(self):
+        return "".join(random.choices(digits, k=self.CODE_LENGTH))
+
+    def create_code(self, email):
+        verification_code = self.model(email=email, code=self.generate_code())
+        verification_code.save(using=self._db)
+        return verification_code
+
+
+class VerificationCode(models.Model):
+    email = models.EmailField(
+        _('email address'),
+        blank=False,
+        null=False,
+    )
+    code = models.CharField(
+        max_length=6,
+        blank=False,
+        null=False,
+    )
+
+    objects = VerificationCodeManager()

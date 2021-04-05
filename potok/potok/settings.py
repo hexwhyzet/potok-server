@@ -31,6 +31,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = [config["main_server_ip"], config["grabber_server_url"], "127.0.0.1", "localhost"]
 
+EMAIL_HOST = config["email_host"]
+EMAIL_USE_TLS = True
+EMAIL_PORT = config["email_port"]
+EMAIL_HOST_USER = config["email_host_user"]
+EMAIL_HOST_PASSWORD = secrets["email_host_password"]
+
 # LOGGING = {
 #     'version': 1,
 #     'disable_existing_loggers': False,
@@ -136,23 +142,23 @@ WSGI_APPLICATION = 'potok.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': config['database_name'],
-        'USER': config['database_user'],
-        'PASSWORD': secrets['database_password'],
-        'HOST': config['database_local_url'],
-        'PORT': '',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': config['database_name'],
+#         'USER': config['database_user'],
+#         'PASSWORD': secrets['database_password'],
+#         'HOST': config['database_local_url'],
+#         'PORT': '',
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
