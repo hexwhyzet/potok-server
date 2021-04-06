@@ -4,7 +4,14 @@ from potok_app.models import Profile, Picture, View, Like, Subscription, Comment
 
 
 def add_view(profile: Profile, picture: Picture):
-    View.objects.create(picture=picture, profile=profile)
+    if not View.objects.filter(picture=picture, profile=profile).exists():
+        picture.profile.views_num += 1
+        picture.profile.save()
+
+        picture.views_num += 1
+        picture.save()
+
+        View.objects.create(picture=picture, profile=profile)
 
 
 def does_exist_unseen_subscription_picture(profile: Profile):
@@ -14,23 +21,49 @@ def does_exist_unseen_subscription_picture(profile: Profile):
 def switch_like(profile: Profile, picture: Picture):
     if Like.objects.filter(picture=picture, profile=profile).exists():
         Like.objects.get(picture=picture, profile=profile).delete()
-        picture.likes_num = max(0, picture.likes_num - 1)
+        picture.likes_num -= 1
+        picture.save()
+
+        pic_profile = Profile.objects.get(pk=picture.profile.pk)
+        pic_profile.likes_num -= 1
+        pic_profile.save()
     else:
         Like.objects.create(picture=picture, profile=profile)
         picture.likes_num += 1
-    picture.save()
+        picture.save()
+
+        pic_profile = Profile.objects.get(pk=picture.profile.pk)
+        pic_profile.likes_num += 1
+        pic_profile.save()
 
 
 def switch_subscription(follower: Profile, source: Profile):
     if Subscription.objects.filter(follower=follower, source=source).exists():
-        Subscription.objects.get(follower=follower, source=source).delete()
+        unsubscribe(follower, source)
     else:
-        Subscription.objects.create(follower=follower, source=source)
+        subscribe(follower, source)
 
 
 def unsubscribe(follower: Profile, source: Profile):
     if Subscription.objects.filter(follower=follower, source=source).exists():
+        follower.subs_num -= 1
+        follower.save()
+
+        source.followers_num -= 1
+        source.save()
+
         Subscription.objects.get(follower=follower, source=source).delete()
+
+
+def subscribe(follower: Profile, source: Profile):
+    if not Subscription.objects.filter(follower=follower, source=source).exists():
+        follower.subs_num += 1
+        follower.save()
+
+        source.followers_num += 1
+        source.save()
+
+        Subscription.objects.create(follower=follower, source=source)
 
 
 def last_actions(profile: Profile, number: int, offset: int):

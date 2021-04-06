@@ -1,7 +1,5 @@
 import base64
 
-from django.db.models import Sum
-from django.db.models.functions import Coalesce
 from django.http import JsonResponse, HttpResponseNotFound
 from django.shortcuts import render
 from rest_framework.decorators import api_view
@@ -13,7 +11,7 @@ from potok_app.models import Picture, Profile, Like, Subscription, Comment, Comm
     NAME_MAX_LENGTH, SCREEN_NAME_MAX_LENGTH
 from potok_app.services.actions import switch_like, last_actions, add_view, switch_subscription, comment_by_id, \
     add_comment, comments_of_picture, switch_like_comment, comment_can_be_deleted_by_user, delete_comment, unsubscribe
-from potok_app.services.link import link_by_share_token, create_link, share_token_by_link
+from potok_app.services.link import link_by_share_token, share_token_by_link, create_picture_link
 from potok_app.services.picture import subscription_pictures, feed_pictures, profile_pictures, \
     picture_by_id, liked_pictures, high_resolution_url, mid_resolution_url, low_resolution_url, add_picture, \
     picture_can_be_deleted_by_user, delete_picture, add_report
@@ -86,9 +84,9 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
         "screen_name": profile.screen_name or "unknown",
         "description": profile.description or None,
         "subs_num": profile.subs.count() if user_profile is not None else None,
-        "followers_num": profile.followers.count(),
-        "views_num": profile.pics.aggregate(views_num=Coalesce(Sum('views_num'), 0))['views_num'],
-        "likes_num": profile.pics.aggregate(likes_num=Coalesce(Sum('likes_num'), 0))['likes_num'],
+        "followers_num": profile.followers_num,
+        "views_num": profile.views_num,
+        "likes_num": profile.likes_num,
         "avatar_url": f"{config['image_server_url']}/{config['image_server_bucket']}{avatar_url(profile) or '/defaults/avatar.png'}",
         "is_subscribed": user_profile.subs.filter(id=profile.id).exists() if user_profile is not None else False,
         "subscribe_url": f"{config['main_server_url']}/app/subscribe/{profile.id}" if not is_users else None,
@@ -277,21 +275,21 @@ def app_add_view(request, user_profile, picture_id):
     return construct_app_response(200, None)
 
 
-@api_view(['GET'])
-@get_user_profile
-def app_generate_profile_share_link(request, user_profile, profile_id):
-    profile = profile_by_id(profile_id)
-    link = create_link(user_profile, profile)
-    share_token = share_token_by_link(link)
-    response_content = {"share_url": f"{config['main_server_url']}/share/{share_token}"}
-    return construct_app_response(200, response_content)
+# @api_view(['GET'])
+# @get_user_profile
+# def app_generate_profile_share_link(request, user_profile, profile_id):
+#     profile = profile_by_id(profile_id)
+#     link = create_link(user_profile, profile)
+#     share_token = share_token_by_link(link)
+#     response_content = {"share_url": f"{config['main_server_url']}/share/{share_token}"}
+#     return construct_app_response(200, response_content)
 
 
 @api_view(['GET'])
 @get_user_profile
 def app_generate_picture_share_link(request, user_profile, picture_id):
     picture = picture_by_id(picture_id)
-    link = create_link(user_profile, picture)
+    link = create_picture_link(user_profile, picture)
     share_token = share_token_by_link(link)
     response_content = {"share_url": f"{config['main_server_url']}/share/{share_token}"}
     return construct_app_response(200, response_content)

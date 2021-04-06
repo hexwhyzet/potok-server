@@ -31,7 +31,7 @@ urlpatterns = [
     path("app/upload_avatar", views.app_add_avatar),
     path("app/mark_as_seen/<int:picture_id>", views.app_add_view),
     path("app/last_actions/<int:number>/<int:offset>", views.app_last_actions),
-    path("app/share_profile/<str:profile_id>", views.app_generate_profile_share_link),
+    # path("app/share_profile/<str:profile_id>", views.app_generate_profile_share_link),
     path("app/share_picture/<str:picture_id>", views.app_generate_picture_share_link),
     path("app/autofill/<str:search_string>/<int:number>/<int:offset>", views.app_autofill),
     path("app/search/<str:search_string>/<int:number>/<int:offset>", views.app_search),
