@@ -84,7 +84,7 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
         "name": profile.name or "No name",
         "screen_name": profile.screen_name or "unknown",
         "description": profile.description or None,
-        "subs_num": profile.subs.count() if user_profile is not None else None,
+        "subs_num": profile.subs_num if user_profile is not None else None,
         "followers_num": profile.followers_num,
         "views_num": profile.views_num,
         "likes_num": profile.likes_num,

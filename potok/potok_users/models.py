@@ -124,6 +124,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         null=True,
         default=None,
         unique=True,
+        blank=True,
     )
 
     EMAIL_FIELD = 'email'
