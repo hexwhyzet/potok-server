@@ -7,6 +7,7 @@ from .config import Secrets
 
 secrets = Secrets()
 bot = telebot.TeleBot(secrets["tg_token"])
+bot.config['api_key'] = secrets["tg_token"]
 chat_id = secrets["error_chat_id"]
 boot_datetime = datetime.datetime.today()
 
@@ -56,5 +57,6 @@ class TelegramNotificationHandler(logging.Handler):
 
 
 if __name__ == '__main__':
-    startup()
-    bot.polling(none_stop=True, interval=5)
+    send_message("Jopa")
+    # startup()
+    # bot.polling(none_stop=True, interval=5)

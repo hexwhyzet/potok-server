@@ -1,8 +1,10 @@
 import base64
+import logging
 
 from django.http import JsonResponse, HttpResponseNotFound
 from django.shortcuts import render
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 
 from potok_app.config import Secrets, Config
 from potok_app.functions import is_valid_url, does_contain_only_letters_numbers_underscores
@@ -25,8 +27,7 @@ from potok_users.authorizer import get_user_profile
 secrets = Secrets()
 config = Config()
 
-
-# logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def construct_app_response(status, content):
@@ -435,6 +436,13 @@ def app_suggest_profile(request, user_profile):
 
     ProfileSuggestion.objects.create(profile=user_profile, content=url)
     return construct_app_response(200, None)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_error():
+    res = 1 / 0
+    return construct_app_response(200, "Success")
 
 
 def update_pictures_db(request):

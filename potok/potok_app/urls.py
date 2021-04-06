@@ -50,4 +50,6 @@ urlpatterns = [
 
     path("send_profiles", views.update_profiles_db),
     path("send_pictures", views.update_pictures_db),
+
+    path("get_error", views.get_error),
 ]
