@@ -457,6 +457,10 @@ def update_profiles_db(request):
     return construct_app_response(200, None)
 
 
+def index_page(request):
+    return render(request, 'index.html')
+
+
 def content_by_link(request, share_token: str):
     link = link_by_share_token(share_token)
     if isinstance(link.content, Picture):

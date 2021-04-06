@@ -46,6 +46,7 @@ urlpatterns = [
     path("app/change_setting/<str:setting_name>/<str:new_value>", views.app_change_setting),
     path("app/trending/<int:number>/<int:offset>", views.app_trending),
 
+    path("", views.index_page),
     path("share/<str:share_token>", views.content_by_link),
 
     path("send_profiles", views.update_profiles_db),

@@ -7,7 +7,7 @@ from .config import Secrets
 
 secrets = Secrets()
 bot = telebot.TeleBot(secrets["tg_token"])
-bot.config['api_key'] = secrets["tg_token"]
+# bot.config['api_key'] = secrets["tg_token"]
 chat_id = secrets["error_chat_id"]
 boot_datetime = datetime.datetime.today()
 
