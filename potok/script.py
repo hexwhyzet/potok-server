@@ -5,10 +5,12 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'potok.settings')
 django.setup()
 
-from potok_users.models import User
+from potok_app.models import Profile
 
-# User.objects.create_user(email="appleverification@potok.app", password="TbbCYZPJJC")
+# profile = Profile.objects.get(screen_name="pictestempt").pics.order_by("-date")[4].id
+# profile = Profile.objects.get(screen_name="dank_exe").pics.order_by("-date")[27].id
+# profile = Profile.objects.get(screen_name="karkb").pics.order_by("-date")[16].id
+# profile = Profile.objects.get(screen_name__startswith="teacheng").pics.order_by("-date")[15].id
+profile = Profile.objects.get(screen_name__startswith="afroside").pics.order_by("-date")[29].id
 
-User.objects.create_user(email="googleplayverification@potok.app", password="vBgubxNRdZ")
-
-# print(User.objects.exclude(email="kabakov_ivan@mail.ru").count(), User.objects.count())
+print(profile)

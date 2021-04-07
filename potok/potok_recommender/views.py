@@ -3,7 +3,7 @@ from typing import List
 
 from rest_framework.decorators import api_view
 
-from potok_app.models import Profile
+from potok_app.models import Profile, Picture
 from potok_app.services.profile import profile_by_id
 from potok_app.views import construct_app_response, construct_picture_response, construct_profile_response, \
     construct_ads_response
@@ -32,6 +32,34 @@ def construct_ticket_response(ticket: Ticket, user_profile: Profile):
         # "date_realized": int(ticket.date_realized.timestamp()),
     }
     return response_content
+
+
+@api_view(['GET'])
+@get_user_profile
+def preview_pictures(request, user_profile, number):
+    ans = []
+
+    picture_ids = [21357, 21575, 19073, 21583, 21509]
+    for picture_id in picture_ids:
+        picture = Picture.objects.get(id=picture_id)
+        ans.append({
+            "type": "ticket",
+            "id": 0,
+            "token": "none",
+
+            # "is_issued": ticket.is_issued,
+            # "is_returned": ticket.is_returned,
+            # "is_viewed": ticket.is_viewed,
+            # "is_liked": ticket.is_liked,
+            # "is_shared": ticket.is_shared,
+
+            "picture": construct_picture_response(picture, user_profile),
+            "profile": construct_profile_response(picture.profile, user_profile),
+
+            "date_created": 1400000,
+            # "date_realized": int(ticket.date_realized.timestamp()),
+        })
+    return construct_app_response(200, ans)
 
 
 def construct_tickets(tickets: List[Ticket], user_profile: Profile):
