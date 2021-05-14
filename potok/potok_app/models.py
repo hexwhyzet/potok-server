@@ -42,6 +42,17 @@ class AvatarData(models.Model):
     res = models.PositiveSmallIntegerField()
 
 
+class ProfileAttachment(models.Model):
+
+    class Tag(models.Choices):
+        VK = "vk"
+        Custom = "custom"
+
+    tag = models.CharField(choices=Tag.choices, max_length=100, default=Tag.Custom)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='attachments')
+    url = models.CharField(max_length=100)
+
+
 class Picture(models.Model):
     id = models.BigAutoField(primary_key=True)
     minor_id = models.CharField(max_length=1000, null=True, default=None, blank=True)

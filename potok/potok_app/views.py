@@ -1,5 +1,6 @@
 import base64
 import logging
+from typing import List
 
 from django.http import JsonResponse, HttpResponseNotFound
 from django.shortcuts import render
@@ -10,7 +11,7 @@ from potok_app.config import Secrets, Config
 from potok_app.functions import is_valid_url, does_contain_only_letters_numbers_underscores
 from potok_app.importer import pics_json_parser, profiles_json_parser
 from potok_app.models import Picture, Profile, Like, Subscription, Comment, CommentLike, ProfileSuggestion, \
-    NAME_MAX_LENGTH, SCREEN_NAME_MAX_LENGTH
+    NAME_MAX_LENGTH, SCREEN_NAME_MAX_LENGTH, ProfileAttachment
 from potok_app.services.actions import switch_like, last_actions, add_view, switch_subscription, comment_by_id, \
     add_comment, comments_of_picture, switch_like_comment, comment_can_be_deleted_by_user, delete_comment, unsubscribe
 from potok_app.services.link import link_by_share_token, share_token_by_link, create_picture_link
@@ -82,6 +83,7 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
         "are_liked_pictures_available": are_liked_pictures_available(user_profile,
                                                                      profile) if user_profile is not None else None,
         "name": profile.name or "No name",
+        "attachments": construct_attachments(profile.attachments),
         "screen_name": profile.screen_name or "unknown",
         "description": profile.description or None,
         "subs_num": profile.subs_num if user_profile is not None else None,
@@ -97,6 +99,19 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
         "reload_url": f"{config['main_server_url']}/app/profile/{profile.id}",
     }
     return response_content
+
+
+def construct_attachment(attachment: ProfileAttachment):
+    response_content = {
+        "type": "attachment",
+        "tag": attachment.tag,
+        "url": attachment.url,
+    }
+    return response_content
+
+
+def construct_attachments(attachments: List[ProfileAttachment]):
+    return list(map(construct_attachment, attachments))
 
 
 def construct_profiles(profiles: list[Profile], user_profile: Profile = None):

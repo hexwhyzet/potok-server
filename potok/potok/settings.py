@@ -27,7 +27,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = secrets["django_secret_key"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [config["main_server_ip"], config["grabber_server_url"], "127.0.0.1", "localhost"]
 
@@ -142,23 +142,23 @@ WSGI_APPLICATION = 'potok.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
-
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': config['database_name'],
-#         'USER': config['database_user'],
-#         'PASSWORD': secrets['database_password'],
-#         'HOST': config['database_local_url'],
-#         'PORT': '',
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
 #     }
 # }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': config['database_name'],
+        'USER': config['database_user'],
+        'PASSWORD': secrets['database_password'],
+        'HOST': config['database_host'],
+        'PORT': config['database_port'],
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -209,3 +209,5 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 2621440
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440 * 4
 
 AUTH_USER_MODEL = 'potok_users.User'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

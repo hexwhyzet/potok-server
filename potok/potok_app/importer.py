@@ -6,7 +6,7 @@ import requests
 
 from potok_app.config import Config, Secrets
 from potok_app.functions import extension_from_url
-from potok_app.models import Picture, Profile
+from potok_app.models import Picture, Profile, ProfileAttachment
 from potok_app.services.picture import resize_and_upload_picture_to_storage
 from potok_app.services.profile import add_avatar
 from potok_users.models import User
@@ -65,10 +65,25 @@ def profiles_json_parser(profiles_json):
         """
     profiles_data = json.loads(profiles_json)
     for profile_data in profiles_data:
+        source = profile_data['source'].lower()
+
         profile, created = Profile.objects.update_or_create(
             minor_id=profile_data['source'] + str(abs(int(profile_data['source_profile_id']))),
             defaults={"name": profile_data['name'],
                       "screen_name": profile_data['screen_name']})
+
+        tag = ProfileAttachment.Tag.Custom
+        if source == "vk":
+            tag = ProfileAttachment.Tag.VK
+
+        if "url" in profile_data:
+            ProfileAttachment.objects.update_or_create(
+                tag=tag,
+                profile=profile,
+                defaults={
+                    "url": profile_data['url']
+                }
+            )
 
         if profile.user is None:
             profile.user = User.objects.create_empty_user()

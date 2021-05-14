@@ -9,7 +9,7 @@ from potok_app.views import construct_app_response, construct_picture_response, 
     construct_ads_response
 from potok_recommender.models import Ticket
 from potok_recommender.services.issuer import get_issuer
-from potok_recommender.services.ticket import update_ticket
+from potok_recommender.services.ticket import update_ticket, return_tickets
 from potok_users.authorizer import get_user_profile
 
 
@@ -80,9 +80,9 @@ def issue_tickets_by_profile(profile: Profile, number):
     return tickets
 
 
-def refresh_issued_tickets(profile_id: int):
-    profile = profile_by_id(profile_id)
-    Ticket.objects.filter(profile=profile, is_viewed=False, is_issued=True).update(is_issued=False)
+# def refresh_issued_tickets(profile_id: int):
+#     profile = profile_by_id(profile_id)
+#     Ticket.objects.filter(profile=profile, is_viewed=False, is_issued=True).update(is_issued=False)
 
 
 @api_view(['GET'])
@@ -98,6 +98,5 @@ def app_tickets(request, user_profile, number):
 def app_return_tickets(request, user_profile):
     content = request.POST["content"]
     tickets = loads(content)
-    for ticket in tickets:
-        update_ticket(user_profile, ticket)
+    return_tickets(user_profile, tickets)
     return construct_app_response(200, None)
