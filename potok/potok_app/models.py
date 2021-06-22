@@ -28,6 +28,16 @@ class Profile(models.Model):
     subs_num = models.PositiveIntegerField(default=0)
     followers_num = models.PositiveIntegerField(default=0)
 
+    def __str__(self):
+        if self.name is not None:
+            return f"{self.name} ({self.screen_name})"
+        if self.screen_name is not None:
+            return str(self.screen_name)
+        if self.minor_id is not None:
+            return str(self.minor_id)
+        else:
+            return f"unnamed user {self.id}"
+
 
 class Avatar(models.Model):
     id = models.AutoField(primary_key=True)
@@ -43,14 +53,17 @@ class AvatarData(models.Model):
 
 
 class ProfileAttachment(models.Model):
-
     class Tag(models.Choices):
         VK = "vk"
+        Reddit = "reddit"
         Custom = "custom"
 
     tag = models.CharField(choices=Tag.choices, max_length=100, default=Tag.Custom)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='attachments')
     url = models.CharField(max_length=100)
+
+    def __str__(self):
+        return str(self.profile)
 
 
 class Picture(models.Model):
@@ -79,6 +92,9 @@ class Picture(models.Model):
         )
         picture.save()
         return picture
+
+    def __str__(self):
+        return str(self.id)
 
 
 class PictureData(models.Model):

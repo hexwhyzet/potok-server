@@ -27,7 +27,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = secrets["django_secret_key"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [config["main_server_ip"], config["grabber_server_url"], "127.0.0.1", "localhost"]
 
@@ -74,7 +74,7 @@ LOGGING = {
             'propagate': True,
         },
         'django.request': {
-            'handlers': ['telegram'],
+            'handlers': ['console'],
             'level': 'ERROR',
             'propagate': False,
         },

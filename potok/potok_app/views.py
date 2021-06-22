@@ -83,7 +83,7 @@ def construct_profile_response(profile: Profile, user_profile: Profile = None):
         "are_liked_pictures_available": are_liked_pictures_available(user_profile,
                                                                      profile) if user_profile is not None else None,
         "name": profile.name or "No name",
-        "attachments": construct_attachments(profile.attachments),
+        "attachments": construct_attachments(profile.attachments.all()),
         "screen_name": profile.screen_name or "unknown",
         "description": profile.description or None,
         "subs_num": profile.subs_num if user_profile is not None else None,

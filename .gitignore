@@ -2,3 +2,6 @@
 /configs/secrets.json
 /potok/db.sqlite3
 /potok/media
+/potok/potok_app/migrations/
+/potok/potok_users/migrations/
+/potok/potok_recommender/migrations/
