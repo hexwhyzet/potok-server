@@ -19,7 +19,7 @@ from potok_app.services.picture import subscription_pictures, feed_pictures, pro
     picture_by_id, liked_pictures, high_resolution_url, mid_resolution_url, low_resolution_url, add_picture, \
     picture_can_be_deleted_by_user, delete_picture, add_report
 from potok_app.services.profile import profile_by_id, search_profiles_by_screen_name_prefix, search_profiles_by_text, \
-    avatar_url, switch_block, is_profile_available, are_liked_pictures_available, is_blocked_by_user, is_profile_yours, \
+    avatar_url, switch_block, is_profile_available, are_liked_pictures_available, is_blocked_by_user, is_profile_users, \
     update_name, does_screen_name_exists, update_screen_name, update_publicity, update_liked_pictures_publicity, \
     add_avatar, trending_profiles
 from potok_app.services.session import create_session, session_by_token
@@ -71,7 +71,7 @@ def construct_pictures(pictures: list[Picture], user_profile: Profile = None):
 
 
 def construct_profile_response(profile: Profile, user_profile: Profile = None):
-    is_users = is_profile_yours(user_profile, profile)
+    is_users = is_profile_users(user_profile, profile)
     response_content = {
         "id": profile.id,
         "type": "profile",

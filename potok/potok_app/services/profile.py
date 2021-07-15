@@ -43,12 +43,12 @@ def is_blocked_by_user(user_profile: Profile, profile: Profile):
     return user_profile.blocked_profiles.filter(id=profile.id).exists()
 
 
-def is_profile_yours(user_profile: Profile, profile: Profile):
+def is_profile_users(user_profile: Profile, profile: Profile):
     return user_profile == profile
 
 
 def is_profile_available(user_profile: Profile, profile: Profile):
-    if is_profile_yours(user_profile, profile):
+    if is_profile_users(user_profile, profile):
         return True
 
     return not is_blocked_by_user(user_profile, profile) \
@@ -57,7 +57,7 @@ def is_profile_available(user_profile: Profile, profile: Profile):
 
 
 def are_liked_pictures_available(user_profile: Profile, profile: Profile):
-    if is_profile_yours(user_profile, profile):
+    if is_profile_users(user_profile, profile):
         return True
 
     return is_profile_available(user_profile, profile) and profile.are_liked_pictures_public

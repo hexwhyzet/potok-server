@@ -7,6 +7,7 @@ MINOR_ID_MAX_LENGTH = 100
 SCREEN_NAME_MAX_LENGTH = 100
 NAME_MAX_LENGTH = 100
 DESCRIPTION_MAX_LENGTH = 100
+COMMENT_MAX_LENGTH = 150
 
 
 class Profile(models.Model):
@@ -107,7 +108,7 @@ class Comment(models.Model):
     id = models.BigAutoField(primary_key=True)
     picture = models.ForeignKey(Picture, on_delete=models.CASCADE, related_name='comments')
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='comments')
-    text = models.CharField(max_length=150, blank=False, null=False)
+    text = models.CharField(max_length=COMMENT_MAX_LENGTH, blank=False, null=False)
     date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
     profiles_liked = models.ManyToManyField(Profile, through='CommentLike', related_name='comments_liked', blank=True)
     likes_num = models.IntegerField(default=0)
