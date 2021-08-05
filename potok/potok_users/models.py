@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from potok_app.models import Profile
-from potok_app.services.profile import generate_unique_screen_name
+from potok_app.services.profile.profile import generate_unique_screen_name
 
 
 class UserManager(BaseUserManager):
@@ -40,27 +40,21 @@ class UserManager(BaseUserManager):
 
         return user
 
-    def create_user(self, email, code=None, password=None, **extra_fields):
+    def create_user(self, email, password=None, **extra_fields):
         """
         Создает и возвращает `User` с адресом электронной почты,
         именем пользователя и паролем.
         """
-
-        VerificationCode.objects.filter(email=email, code=code).delete()
-
         extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
 
         return self._create_user(email, password, **extra_fields)
 
-    def create_anonymous_user(self, device_id, **extra_fields):
+    def create_anonymous_user(self, **extra_fields):
         """
         Создает и возвращает анонимного `User` с кодом устройства
         """
-        if not device_id:
-            raise ValueError('Код устройства должен быть установлен')
-
-        user = self.model(device_id=device_id, **extra_fields)
+        user = self.model(**extra_fields)
         user.save(using=self._db)
 
         profile = Profile(user=user)
@@ -96,7 +90,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         _('verified'),
         default=False,
         help_text=_(
-            'Designates whether this user verified his account.'
+            'Designates whether this user verified his email.'
         ),
     )
     email = models.EmailField(
@@ -118,20 +112,22 @@ class User(AbstractBaseUser, PermissionsMixin):
         _('date joined'),
         default=timezone.now,
     )
-    device_id = models.CharField(
-        _('device id'),
-        max_length=100,
-        null=True,
-        default=None,
-        unique=True,
-        blank=True,
-    )
+
+    @property
+    def is_authenticated(self):
+        return self.email is None
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
     objects = UserManager()
+
+    # class Meta:
+    #     constraints = [
+    #         CheckConstraint(check=((Q(is_anonymous=True) & Q(email=None)) | (Q(is_anonymous=False) & ~Q(email=None))),
+    #                         name='anonymous_user')
+    #     ]
 
     def __str__(self):
         """
@@ -141,8 +137,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         if self.email:
             return self.email
 
-        if not self.is_verified and not self.is_staff and self.device_id:
-            return self.device_id
+        # if not self.is_verified and not self.is_staff and self.device_id:
+        #     return self.device_id
 
         return "id" + str(self.id)
 
@@ -192,81 +188,35 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         return token
 
-
-# class Verification(models.Model):
-#     def _generate_jwt_token(self):
-#         """
-#         Создает веб-токен JSON, в котором хранится идентификатор
-#         этого пользователя и срок его действия
-#         составляет 60 дней в будущем.
-#         """
-#         dt = datetime.now() + timedelta(days=60)
-#
-#         token = jwt.encode({
-#             'id': self.pk,
-#             'exp': dt.utcfromtimestamp(dt.timestamp()),
-#         }, settings.SECRET_KEY, algorithm='HS256')
-#
-#         return token
-#
-#     @abstractmethod
-#     def verify(self):
-#         """
-#         Function that should be called after change will be confirmed
-#         """
-#
-#
-# class InitialEmail(Verification):
-#     email = models.EmailField(
-#         _('email address'),
-#         blank=True,
-#         null=True,
-#         unique=True,
-#     )
-#
-#
-# class ChangeEmail(Verification):
-#     old_email = models.EmailField(
-#         _('email address'),
-#         blank=True,
-#         null=True,
-#         unique=True,
-#     )
-#     email = models.EmailField(
-#         _('email address'),
-#         blank=True,
-#         null=True,
-#         unique=True,
-#     )
-#
-#
-# class ChangePassword(Verification):
-#     old_password = models.CharField(_('password'), max_length=128)
-#     password = models.CharField(_('password'), max_length=128)
+    def send_verification_code(self):
+        assert not self.is_anonymous
+        assert not self.is_verified
 
 
-class VerificationCodeManager(models.Manager):
+class AccountVerificationCodeManager(models.Manager):
     CODE_LENGTH = 6
 
-    def generate_code(self):
-        return "".join(random.choices(digits, k=self.CODE_LENGTH))
+    def generate_code_string(self):
+        return ''.join(random.choices(digits, k=self.CODE_LENGTH))
 
-    def create_code(self, email):
-        verification_code = self.model(email=email, code=self.generate_code())
+    def create_code(self, user):
+        verification_code = self.model(user=user, email=user.email, code=self.generate_code_string())
         verification_code.save(using=self._db)
         return verification_code
 
 
-class VerificationCode(models.Model):
+class AccountVerificationCode(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, unique=True)
     email = models.EmailField(
         _('email address'),
         blank=False,
         null=False,
     )
+    date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
+    objects = AccountVerificationCodeManager()
     code = models.CharField(
-        max_length=6,
+        max_length=objects.CODE_LENGTH,
         blank=False,
         null=False,
     )
-
-    objects = VerificationCodeManager()
+    attempts = models.SmallIntegerField(default=0)

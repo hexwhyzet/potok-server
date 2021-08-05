@@ -24,9 +24,9 @@ from . import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('potok_app.urls')),
-    path('', include('potok_recommender.urls')),
-    path('', include('potok_users.urls')),
+    path('api/', include('potok_app.api.urls')),
+    path('auth/', include('potok_users.api.urls')),
+    # path('', include('potok_recommender.urls')),
     url(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     url(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT})
 ]

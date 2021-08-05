@@ -13,3 +13,7 @@ djangorestframework>=3.12.2
 PyJWT>=2.0.1
 random_username
 mailchecker
+drf-nested-routers
+opencv-python
+pytesseract
+numpy

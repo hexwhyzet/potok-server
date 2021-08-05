@@ -1,43 +1,88 @@
 from rest_framework import permissions
 from rest_framework.permissions import IsAdminUser
 
-from potok_app.api.global_permissions import DELETE
-from potok_app.api.profiles.permissions import ProfileAccessPermission
-from potok_app.services.profile import is_profile_users
+from potok_app.api.http_methods import *
+from potok_app.api.pictures.permissions import GetPictureAccessPermission
+from potok_app.api.pictures.validators import is_valid_picture_id
+from potok_app.api.profiles.permissions import IsProfileUsers
 
 
 class CommentAccessPermission(permissions.BasePermission):
     """
-    Object-level permission to only allow
+    Object-level permission
 
-    - GET/HEAD/OPTIONS comment for
+    - GET comment for
         - users that have access to the profile under whose picture the comment was left
         - user that owns profile that posted the comment
 
-    - DELETE comment for (users must be eligible to GET comment)
+    - DELETE comment for
         - user that owns profile under whose picture the comment was left
         - user that owns profile that posted the comment
         - admins
 
-    - PUT/PATCH comment for (users must be eligible to DELETE comment)
+    - PATCH comment for
         - user that own profile that posted the comment
+
+    - POST comment for
+        - users that have GET access to picture under which comment is going to be left
 
     Assumes the comment model instance has an `picture` and `profile` attributes.
     """
 
+    def has_permission(self, request, view):
+
+        if view.action == 'list':
+            return ListCommentAccessPermission().has_permission(request, view)
+
+        if request.method == POST:
+            return PostCommentAccessPermission().has_permission(request, view)
+
+        return True
+
     def has_object_permission(self, request, view, comment_obj):
 
-        if is_profile_users(comment_obj.profile, request.user.profile):
-            # This is the only case when PUT/PATCH request is available
-            return True
+        if request.method == GET:
+            return GetCommentAccessPermission().has_object_permission(request, view, comment_obj)
 
-        if ProfileAccessPermission().has_object_permission(request, view, comment_obj.profile):
+        if request.method == DELETE:
+            return DeleteCommentAccessPermission().has_object_permission(request, view, comment_obj)
 
-            if request.method in permissions.SAFE_METHODS:
-                return True
-
-            if request.method == DELETE:
-                return IsAdminUser().has_permission(request, view) \
-                       or is_profile_users(comment_obj.picture.profile, request.user.profile)
+        if request.method == PATCH:
+            return PatchCommentAccessPermission().has_object_permission(request, view, comment_obj)
 
         return False
+
+
+class ListCommentAccessPermission(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        picture = is_valid_picture_id(view.kwargs.get('picture_id'))
+        return GetPictureAccessPermission().has_object_permission(request, view, picture)
+
+
+class PostCommentAccessPermission(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        picture = is_valid_picture_id(view.kwargs.get('picture_id'))
+        return GetPictureAccessPermission().has_object_permission(request, view, picture)
+
+
+class GetCommentAccessPermission(permissions.BasePermission):
+
+    def has_object_permission(self, request, view, comment_obj):
+        return IsProfileUsers().has_object_permission(request, view, comment_obj.picture.profile) \
+               or GetPictureAccessPermission().has_object_permission(request, view, comment_obj.picture)
+
+
+class DeleteCommentAccessPermission(permissions.BasePermission):
+
+    def has_object_permission(self, request, view, comment_obj):
+        return IsAdminUser().has_permission(request, view) \
+               or IsProfileUsers().has_object_permission(request, view, comment_obj.picture.profile) \
+               or IsProfileUsers().has_object_permission(request, view, comment_obj.profile)
+
+
+class PatchCommentAccessPermission(permissions.BasePermission):
+
+    def has_object_permission(self, request, view, comment_obj):
+        return IsProfileUsers().has_object_permission(request, view, comment_obj.picture.profile)

@@ -1,7 +1,22 @@
 {
   "path_to_project": "",
   "main_server_url": "",
+  "grabber_server_url": "",
   "main_server_ip": "",
   "main_server_port": "",
-  "image_server_url": ""
+
+  "image_server_url": "",
+  "image_server_bucket": "",
+  "image_server_directory": "",
+
+  "database_name": "",
+  "database_user": "",
+  "database_host": "",
+  "database_port": "",
+
+  "email_host": "",
+  "email_port": 0,
+  "email_host_user": "",
+
+  "tesseract_path": ""
 }

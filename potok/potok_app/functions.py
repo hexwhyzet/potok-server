@@ -1,6 +1,8 @@
+from datetime import datetime
 from random import choices
 from string import ascii_lowercase, ascii_uppercase, digits
 
+import pytz
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
@@ -56,6 +58,10 @@ def does_contain_only_letters_numbers_underscores(string):
         if letter not in pool:
             return False
     return True
+
+
+def timestamp_to_date(timestamp):
+    return datetime.fromtimestamp(timestamp, pytz.timezone("UTC"))
 
 
 if __name__ == '__main__':

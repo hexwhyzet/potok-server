@@ -2,11 +2,19 @@ from django.contrib import admin
 from django.utils.html import format_html
 
 from potok_app.config import Secrets, Config
-from potok_app.models import Profile, Picture, Session, Like, Subscription, View, Link, \
-    Comment, CommentLike, PictureData, Avatar, AvatarData, ProfileSuggestion, ProfileAttachment
-from potok_app.services.picture import high_resolution_url
+from potok_app.models import Profile, Picture, Session, Subscription, PictureView, Share, \
+    Comment, PictureData, Avatar, ProfileSuggestion, ProfileAttachment, Like
 
 admin.site.register(Profile)
+admin.site.register(Avatar)
+admin.site.register(PictureData)
+admin.site.register(Session)
+admin.site.register(Subscription)
+admin.site.register(PictureView)
+admin.site.register(Like)
+admin.site.register(Share)
+admin.site.register(Comment)
+admin.site.register(ProfileSuggestion)
 
 secrets = Secrets()
 config = Config()
@@ -26,21 +34,9 @@ class PictureAdmin(admin.ModelAdmin):
 
     @staticmethod
     def image_tag(picture: Picture):
+        return ""
         return format_html(
             f"<img src='{config['image_server_url']}/{config['image_server_bucket']}{high_resolution_url(picture)}' width='250' height='250'/>")
-
-
-admin.site.register(PictureData)
-admin.site.register(Session)
-admin.site.register(Like)
-admin.site.register(Subscription)
-admin.site.register(View)
-admin.site.register(Link)
-admin.site.register(Comment)
-admin.site.register(CommentLike)
-admin.site.register(Avatar)
-admin.site.register(AvatarData)
-admin.site.register(ProfileSuggestion)
 
 
 @admin.register(ProfileAttachment)

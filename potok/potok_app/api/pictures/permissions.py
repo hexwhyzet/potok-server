@@ -1,40 +1,53 @@
 from rest_framework import permissions
-from rest_framework.permissions import IsAdminUser
 
-from potok_app.api.global_permissions import DELETE, PATCH, PUT
-from potok_app.services.profile import is_profile_available, is_profile_users
+from potok_app.api.http_methods import GET, DELETE, PATCH, POST
+from potok_app.api.profiles.permissions import GetProfileContentAccessPermission, \
+    DeleteProfileContentAccessPermission, PatchProfileContentAccessPermission, IsProfileUsers
+from potok_app.api.profiles.validators import is_valid_profile_id
 
 
-class ProfileAccessPermission(permissions.BasePermission):
+class PictureAccessPermission(permissions.BasePermission):
     """
-    Object-level permission to only allow
+    Object-level permission
 
-    - GET/HEAD/OPTIONS profile for
-        - users that have access to the profile
+    - GET/DELETE/PATCH same as access permission to profile that posted picture
 
-        If you've blocked the user or the user has blocked you returns False
-        If profile is private and your subscription haven't been accepted by the user returns False
-        Otherwise returns True
-
-    - DELETE profile for (users must be eligible to GET comment)
-        - user that owns the profile
-        - admins
-
-    - PUT/PATCH profile for (users must be eligible to DELETE comment)
-        - user that owns the profile
+    - POST always allowed
     """
 
-    def has_object_permission(self, request, view, profile_obj):
+    def has_permission(self, request, view):
+        if request.method == POST:
+            return PostPictureAccessPermission().has_object_permission(request, view)
 
-        if is_profile_available(request.user.profile, profile_obj):
-            if request.method in permissions.SAFE_METHODS:
-                return True
+    def has_object_permission(self, request, view, picture_obj):
+        if request.method == GET:
+            return GetPictureAccessPermission().has_object_permission(request, view, picture_obj)
 
-            if request.method == DELETE:
-                return IsAdminUser().has_permission(request, view) \
-                       or is_profile_users(request.user.profile, profile_obj)
+        if request.method == DELETE:
+            return DeletePictureAccessPermission().has_object_permission(request, view, picture_obj)
 
-            if request.method in [PUT, PATCH]:
-                return is_profile_users(request.user.profile, profile_obj)
+        if request.method == PATCH:
+            return PatchPictureAccessPermission().has_object_permission(request, view, picture_obj)
 
         return False
+
+
+class PostPictureAccessPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        pictures_profile = is_valid_profile_id(view.kwargs['profile_id'])
+        return IsProfileUsers().has_object_permission(request, view, pictures_profile)
+
+
+class GetPictureAccessPermission(permissions.BasePermission):
+    def has_object_permission(self, request, view, picture_obj):
+        return GetProfileContentAccessPermission().has_object_permission(request, view, picture_obj.profile)
+
+
+class DeletePictureAccessPermission(permissions.BasePermission):
+    def has_object_permission(self, request, view, picture_obj):
+        return DeleteProfileContentAccessPermission().has_object_permission(request, view, picture_obj.profile)
+
+
+class PatchPictureAccessPermission(permissions.BasePermission):
+    def has_object_permission(self, request, view, picture_obj):
+        return PatchProfileContentAccessPermission().has_object_permission(request, view, picture_obj.profile)

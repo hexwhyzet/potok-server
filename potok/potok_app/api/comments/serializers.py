@@ -1,16 +1,15 @@
 from rest_framework import serializers
 
-from potok_app.models import Comment, COMMENT_MAX_LENGTH
+from potok_app.api.common_serializers import UnixEpochDateField
+from potok_app.models import Comment
+from potok_app.services.comment.comment import create_comment
 
 
-class CommentSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    text = serializers.CharField(max_length=COMMENT_MAX_LENGTH)
-    date = serializers.DateTimeField(read_only=True)
-    likes_num = serializers.IntegerField(read_only=True)
+class CommentSerializer(serializers.ModelSerializer):
+    date = UnixEpochDateField()
 
     def create(self, validated_data):
-        return Comment.objects.create(**validated_data)
+        return create_comment(**validated_data)
 
     def update(self, instance, validated_data):
         instance.text = validated_data.get('text', instance.text)
@@ -18,4 +17,5 @@ class CommentSerializer(serializers.Serializer):
 
     class Meta:
         model = Comment
-        fields = ["id", "text", "date", "likes_num"]
+        fields = ('id', 'text', 'date', 'likes_num',)
+        read_only_fields = ('id', 'date', 'likes_num',)

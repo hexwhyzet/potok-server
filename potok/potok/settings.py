@@ -92,7 +92,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_rename_app',
     'potok_app.apps.PotokAppConfig',
-    'potok_recommender.apps.PotokRecommenderConfig',
+    # 'potok_recommender.apps.PotokRecommenderConfig',
     'potok_users.apps.PotokUsersConfig',
     'rest_framework',
 ]
@@ -102,11 +102,11 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'potok_users.backends.JWTAuthentication',
+        'potok_users.api.users.serializers.JWTAuthentication',
     ),
-    'DEFAULT_RENDERER_CLASSES': (
-        'potok_app.renderers.PotokJSONRenderer',
-    ),
+    # 'DEFAULT_RENDERER_CLASSES': (
+    #     'potok_app.renderers.PotokJSONRenderer',
+    # ),
 }
 
 MIDDLEWARE = [
@@ -142,23 +142,23 @@ WSGI_APPLICATION = 'potok.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': config['database_name'],
-        'USER': config['database_user'],
-        'PASSWORD': secrets['database_password'],
-        'HOST': config['database_host'],
-        'PORT': config['database_port'],
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': config['database_name'],
+#         'USER': config['database_user'],
+#         'PASSWORD': secrets['database_password'],
+#         'HOST': config['database_host'],
+#         'PORT': config['database_port'],
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators

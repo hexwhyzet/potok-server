@@ -1,7 +1,9 @@
 from django.conf import settings
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
+from django.core.validators import MinLengthValidator
 from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 MINOR_ID_MAX_LENGTH = 100
 SCREEN_NAME_MAX_LENGTH = 100
@@ -17,8 +19,8 @@ class Profile(models.Model):
     name = models.CharField(max_length=NAME_MAX_LENGTH, null=True, default=None, blank=True)
     description = models.CharField(max_length=DESCRIPTION_MAX_LENGTH, null=True, default=None, blank=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.SET_NULL, null=True)
-    subs = models.ManyToManyField('self', symmetrical=False, through='Subscription', related_name='followers',
-                                  blank=True)
+    leaders = models.ManyToManyField('self', symmetrical=False, through='Subscription', related_name='followers',
+                                     blank=True)
     blocked_profiles = models.ManyToManyField('self', symmetrical=False, through='ProfileBlock', blank=True)
     is_public = models.BooleanField(default=True)
     are_liked_pictures_public = models.BooleanField(default=False)
@@ -47,12 +49,6 @@ class Avatar(models.Model):
     date = models.DateTimeField(blank=True, null=True, auto_now_add=True)
 
 
-class AvatarData(models.Model):
-    avatar = models.ForeignKey(Avatar, on_delete=models.CASCADE, related_name='avatar_data')
-    url = models.CharField(max_length=100, default=None, null=True, blank=True)
-    res = models.PositiveSmallIntegerField()
-
-
 class ProfileAttachment(models.Model):
     class Tag(models.Choices):
         VK = "vk"
@@ -63,76 +59,99 @@ class ProfileAttachment(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='attachments')
     url = models.CharField(max_length=100)
 
-    def __str__(self):
-        return str(self.profile)
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['profile', 'tag'], name='unique_tag')
+        ]
 
 
 class Picture(models.Model):
     id = models.BigAutoField(primary_key=True)
     minor_id = models.CharField(max_length=1000, null=True, default=None, blank=True)
     source_url = models.CharField(max_length=1000, null=True, default=None, blank=True)
-    date = models.DateTimeField(blank=True, null=True)
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='pics', blank=True, null=True)
-    profiles_liked = models.ManyToManyField(Profile, through='Like', related_name='pics_liked', blank=True)
-    profiles_viewed = models.ManyToManyField(Profile, through='View', related_name='pics_viewed', blank=True)
+    date = models.DateTimeField(blank=True, null=True, auto_now_add=True)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='pictures', blank=True, null=True)
+    likes = GenericRelation('Like', related_query_name='picture', blank=True)
+    profiles_viewed = models.ManyToManyField(Profile, through='PictureView', related_name='pictures_viewed', blank=True)
     link_url = models.CharField(max_length=100, default=None, null=True, blank=True)
     text = models.CharField(max_length=150, default=None, null=True, blank=True)
+
+    recognized_text = models.CharField(max_length=1000, default=None, null=True, blank=True)
 
     views_num = models.PositiveIntegerField(default=0)
     likes_num = models.PositiveIntegerField(default=0)
     shares_num = models.PositiveIntegerField(default=0)
-
-    @classmethod
-    def create(cls, profile, link_url=None, source_url=None, minor_id=None, date=None):
-        picture = cls(
-            profile=profile,
-            source_url=source_url,
-            minor_id=minor_id,
-            link_url=link_url,
-            date=date,
-        )
-        picture.save()
-        return picture
-
-    def __str__(self):
-        return str(self.id)
+    comments_num = models.PositiveIntegerField(default=0)
 
 
 class PictureData(models.Model):
-    picture = models.ForeignKey(Picture, on_delete=models.CASCADE, related_name='picture_data')
-    url = models.CharField(max_length=100, default=None, null=True, blank=True)
-    res = models.PositiveSmallIntegerField()
+    class PictureDataSizeType(models.TextChoices):
+        TINY = 't', _('Tiny')
+        SMALL = 's', _('Small')
+        MEDIUM = 'm', _('Medium')
+        BIG = 'b', _('Big')
+        HUGE = 'h', _('Huge')
+
+    path = models.CharField(max_length=200, null=False, blank=False)
+    size_type = models.CharField(max_length=1, null=False, blank=False, choices=PictureDataSizeType.choices)
+    height = models.PositiveSmallIntegerField()
+    width = models.PositiveSmallIntegerField()
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['object_id', 'content_type', 'size_type'], name='unique_size_type')
+        ]
 
 
 class Comment(models.Model):
     id = models.BigAutoField(primary_key=True)
     picture = models.ForeignKey(Picture, on_delete=models.CASCADE, related_name='comments')
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='comments')
-    text = models.CharField(max_length=COMMENT_MAX_LENGTH, blank=False, null=False)
+    text = models.CharField(validators=[MinLengthValidator(1)], max_length=COMMENT_MAX_LENGTH, blank=False, null=False)
     date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
-    profiles_liked = models.ManyToManyField(Profile, through='CommentLike', related_name='comments_liked', blank=True)
+    likes = GenericRelation('Like', related_query_name='picture', blank=True)
     likes_num = models.IntegerField(default=0)
 
 
 class Like(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['object_id', 'content_type', 'profile'], name='unique_like')
+        ]
+
+
+class PictureView(models.Model):
     picture = models.ForeignKey(Picture, on_delete=models.CASCADE)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
 
-
-class View(models.Model):
-    picture = models.ForeignKey(Picture, on_delete=models.CASCADE)
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
-    date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['picture', 'profile'], name='unique_view')
+        ]
 
 
 class Subscription(models.Model):
     follower = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='sub_followers')
-    source = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='sub_sources')
+    leader = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='sub_leaders')
+    is_accepted = models.BooleanField(default=False, blank=False, null=False)
     date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
 
     class Meta:
-        unique_together = ('follower', 'source')
+        constraints = [
+            models.UniqueConstraint(fields=['follower', 'leader'], name='unique_subscription')
+        ]
 
 
 class ProfileBlock(models.Model):
@@ -140,17 +159,21 @@ class ProfileBlock(models.Model):
     blocked = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='blocked')
     date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['blocker', 'blocked'], name='unique_block')
+        ]
+
 
 class PictureReport(models.Model):
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="reports")
     picture = models.ForeignKey(Picture, on_delete=models.CASCADE, related_name="reports")
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="reports")
     date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
 
-
-class CommentLike(models.Model):
-    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='likes')
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
-    date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['picture', 'profile'], name='unique_report')
+        ]
 
 
 class Session(models.Model):
@@ -162,11 +185,10 @@ class Session(models.Model):
     feed_pics = models.ManyToManyField(Picture, related_name='sessions_random', blank=True)
 
 
-class Link(models.Model):
+class Share(models.Model):
     id = models.BigAutoField(primary_key=True)
-    sender = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='links_sender', blank=False)
-    receiver = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='links_receiver', blank=True,
-                                 null=True)
+    sender = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='sender_shares', blank=False)
+    receiver = models.ManyToManyField(Profile, related_name='share_receiver', blank=True)
     date = models.DateTimeField(auto_now_add=True)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.BigIntegerField(null=True, blank=True)
