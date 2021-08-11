@@ -10,7 +10,7 @@ from potok_app.api.http_methods import GET
 from potok_app.api.mixins import ProfileExtractorMixin
 from potok_app.api.paginations import SmallResultsSetPagination
 from potok_app.api.profiles.validators import is_valid_profile_id
-from potok_app.services.picture.avatar import avatars_by_profile
+from potok_app.services.picture.avatar import avatars_by_profile, get_current_avatar_or_gap_avatar
 
 
 class AvatarViewSet(ModelViewSet, ProfileExtractorMixin):
@@ -32,8 +32,9 @@ class AvatarViewSet(ModelViewSet, ProfileExtractorMixin):
 
     @action(detail=False, methods=[GET])
     def current(self, request, *args, **kwargs):
-        if self.get_queryset().count() == 0:
-            raise NotFound
-        current_avatar = self.get_queryset().last()
+        profile = self.kwargs_profile()
+        if profile.avatars.count() == 0:
+            raise NotFound()
+        current_avatar = get_current_avatar_or_gap_avatar(profile)
         serializer = self.serializer_class(current_avatar)
         return Response(serializer.data)

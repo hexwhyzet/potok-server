@@ -20,6 +20,16 @@ def create_avatar(profile: Profile, picture_bytes, extension: str):
     return avatar
 
 
+def get_gap_avatar():
+    return Avatar.objects.get(id=8)
+
+
+def get_current_avatar_or_gap_avatar(profile: Profile):
+    if profile.avatars.count() == 0:
+        return get_gap_avatar()
+    return profile.avatars.last()
+
+
 @receiver(signals.pre_delete, sender=Avatar)
 def cascade_delete(sender, instance, **kwargs):
     delete_picture_data_by_content_object(instance)

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from potok_app.api.common_serializers import UnixEpochDateField
+from potok_app.api.profiles.serializers import ProfilePreviewMixin
 from potok_app.models import PictureData, Picture
 from potok_app.object_storage_api import get_bucket_url
 from potok_app.services.picture.picture import create_picture
@@ -15,7 +16,7 @@ class SizesMixin(serializers.Serializer):
         return list(sorted(result, key=lambda x: PictureData.PictureDataSizeType.values.index(x['size_type'])))
 
 
-class PictureSerializer(serializers.ModelSerializer, SizesMixin):
+class PictureSerializer(serializers.ModelSerializer, SizesMixin, ProfilePreviewMixin):
     date = UnixEpochDateField(read_only=True)
 
     def create(self, validated_data):
@@ -23,7 +24,18 @@ class PictureSerializer(serializers.ModelSerializer, SizesMixin):
 
     class Meta:
         model = Picture
-        fields = ('id', 'date', 'text', 'link_url', 'views_num', 'likes_num', 'shares_num', 'comments_num', 'sizes')
+        fields = (
+            'id',
+            'date',
+            'text',
+            'link_url',
+            'views_num',
+            'likes_num',
+            'shares_num',
+            'comments_num',
+            'profile_preview',
+            'sizes',
+        )
         read_only_fields = ('id', 'date', 'views_num', 'likes_num', 'shares_num', 'comments_num', 'sizes')
 
 
