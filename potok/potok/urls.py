@@ -13,22 +13,22 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.staticfiles.urls import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.views.static import serve
 
+from potok_app.views import ShareView
 from . import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('potok_app.api.urls')),
     path('auth/', include('potok_users.api.urls')),
-    # path('', include('potok_recommender.urls')),
-    url(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
-    url(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT})
+    path('share/<str:token>', ShareView.as_view()),
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT})
 ]
 
 urlpatterns += staticfiles_urlpatterns()

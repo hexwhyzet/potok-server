@@ -1,9 +1,12 @@
 from django.db.models import signals
 from django.dispatch import receiver
 
+from potok_app.config import Config
 from potok_app.models import Profile, Avatar
 from potok_app.services.picture.picture_data import create_picture_data_of_all_sizes, \
     delete_picture_data_by_content_object
+
+config = Config()
 
 
 def available_avatars():
@@ -21,7 +24,7 @@ def create_avatar(profile: Profile, picture_bytes, extension: str):
 
 
 def get_gap_avatar():
-    return Avatar.objects.get(id=8)
+    return Avatar.objects.get(id=config['default_avatar_id'])
 
 
 def get_current_avatar_or_gap_avatar(profile: Profile):

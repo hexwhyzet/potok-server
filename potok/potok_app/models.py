@@ -3,7 +3,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MinLengthValidator
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 MINOR_ID_MAX_LENGTH = 100
 SCREEN_NAME_MAX_LENGTH = 100
@@ -22,13 +22,13 @@ class Profile(models.Model):
     leaders = models.ManyToManyField('self', symmetrical=False, through='Subscription', related_name='followers',
                                      blank=True)
     blocked_profiles = models.ManyToManyField('self', symmetrical=False, through='ProfileBlock', blank=True)
-    is_public = models.BooleanField(default=True)
-    are_liked_pictures_public = models.BooleanField(default=False)
+    is_private = models.BooleanField(default=False)
+    are_liked_pictures_private = models.BooleanField(default=True)
 
     views_num = models.PositiveIntegerField(default=0)
     likes_num = models.PositiveIntegerField(default=0)
     shares_num = models.PositiveIntegerField(default=0)
-    subs_num = models.PositiveIntegerField(default=0)
+    leaders_num = models.PositiveIntegerField(default=0)
     followers_num = models.PositiveIntegerField(default=0)
 
     def __str__(self):
@@ -53,9 +53,10 @@ class ProfileAttachment(models.Model):
     class Tag(models.Choices):
         VK = "vk"
         Reddit = "reddit"
-        Custom = "custom"
+        Web = "web"
 
-    tag = models.CharField(choices=Tag.choices, max_length=100, default=Tag.Custom)
+    id = models.AutoField(primary_key=True)
+    tag = models.CharField(choices=Tag.choices, max_length=100)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='attachments')
     url = models.CharField(max_length=100)
 
@@ -113,7 +114,7 @@ class Comment(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='comments')
     text = models.CharField(validators=[MinLengthValidator(1)], max_length=COMMENT_MAX_LENGTH, blank=False, null=False)
     date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
-    likes = GenericRelation('Like', related_query_name='picture', blank=True)
+    likes = GenericRelation('Like', related_query_name='comment', blank=True)
     likes_num = models.IntegerField(default=0)
 
 
@@ -192,7 +193,7 @@ class Share(models.Model):
     date = models.DateTimeField(auto_now_add=True)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.BigIntegerField(null=True, blank=True)
-    content = GenericForeignKey('content_type', 'object_id')
+    content_object = GenericForeignKey('content_type', 'object_id')
 
 
 class ProfileSuggestion(models.Model):

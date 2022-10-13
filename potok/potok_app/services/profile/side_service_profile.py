@@ -6,7 +6,7 @@ def get_or_create_side_service_profile(minor_id: str):
 
 
 def update_or_create_side_service_profile(minor_id: str, name: str, screen_name: str):
-    Profile.objects.update_or_create(
+    return Profile.objects.update_or_create(
         minor_id=minor_id,
         defaults={
             "name": name,

@@ -1,5 +1,6 @@
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -9,8 +10,8 @@ from potok_app.api.profiles.permissions import ProfilePreviewAccessPermission, G
 from potok_app.api.profiles.serializers import ProfileSerializer, ProfilePreviewSerializer
 from potok_app.services.profile.profile import followers, leaders, available_profiles
 from potok_app.services.profile.profile_block import does_block_exist, delete_block, create_block
-from potok_app.services.profile.profile_subscription import does_subscription_exist, delete_subscription, \
-    create_subscription
+from potok_app.services.profile.profile_subscription import safe_delete_subscription, \
+    safe_create_subscription
 
 
 class ProfileViewSet(ModelViewSet):
@@ -26,21 +27,21 @@ class ProfileViewSet(ModelViewSet):
     def preview(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
 
-    @action(detail=True, methods=[PUT, DELETE], permission_classes=[GetProfileContentAccessPermission])
-    def subscribe(self, request):
+    @action(detail=True, methods=[PUT, DELETE],
+            permission_classes=[IsAuthenticated, GetProfileContentAccessPermission])
+    def subscription(self, request, *args, **kwargs):
         leader = self.get_object()
         follower = self.request.user.profile
 
-        if does_subscription_exist(follower, leader):
-            if request.method == DELETE:
-                delete_subscription(follower, leader)
-        else:
-            if request.method == PUT:
-                create_subscription(follower, leader)
+        if request.method == DELETE:
+            safe_delete_subscription(follower, leader)
+        if request.method == PUT:
+            safe_create_subscription(follower, leader)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=[PUT, DELETE], permission_classes=[ProfilePreviewAccessPermission])
-    def block(self, request):
+    @action(detail=True, methods=[PUT, DELETE],
+            permission_classes=[IsAuthenticated, ProfilePreviewAccessPermission])
+    def block(self, request, *args, **kwargs):
         blocked = self.get_object()
         blocker = self.request.user.profile
 
@@ -53,7 +54,7 @@ class ProfileViewSet(ModelViewSet):
         return Response(status=blocker.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=[GET])
-    def followers(self, request):
+    def followers(self, request, *args, **kwargs):
         profiles = followers(self.get_object())
 
         page = self.paginate_queryset(profiles)
@@ -65,7 +66,7 @@ class ProfileViewSet(ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=[GET])
-    def leaders(self, request):
+    def leaders(self, request, *args, **kwargs):
         profiles = leaders(self.get_object())
 
         page = self.paginate_queryset(profiles)

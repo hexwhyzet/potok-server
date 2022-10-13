@@ -8,7 +8,7 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from potok_app.models import Profile
 from potok_app.services.profile.profile import generate_unique_screen_name
@@ -115,7 +115,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def is_authenticated(self):
-        return self.email is None
+        return self.email is not None
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'

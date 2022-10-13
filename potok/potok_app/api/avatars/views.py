@@ -7,13 +7,13 @@ from rest_framework.viewsets import ModelViewSet
 
 from potok_app.api.avatars.serializers import AvatarSerializer
 from potok_app.api.http_methods import GET
-from potok_app.api.mixins import ProfileExtractorMixin
+from potok_app.api.mixins import FiltersMixin
 from potok_app.api.paginations import SmallResultsSetPagination
 from potok_app.api.profiles.validators import is_valid_profile_id
 from potok_app.services.picture.avatar import avatars_by_profile, get_current_avatar_or_gap_avatar
 
 
-class AvatarViewSet(ModelViewSet, ProfileExtractorMixin):
+class AvatarViewSet(ModelViewSet, FiltersMixin):
     serializer_class = AvatarSerializer
     permission_classes = []
     lookup_field = 'id'
@@ -26,13 +26,13 @@ class AvatarViewSet(ModelViewSet, ProfileExtractorMixin):
     def perform_create(self, serializer):
         base64_picture = self.request.data['base64_picture']
         picture_bytes = base64.b64decode(base64_picture)
-        profile = self.kwargs_profile()
+        profile = self.get_kwargs_profile()
         extension = self.request.data['extension']
         serializer.save(profile=profile, picture_bytes=picture_bytes, extension=extension)
 
     @action(detail=False, methods=[GET])
     def current(self, request, *args, **kwargs):
-        profile = self.kwargs_profile()
+        profile = self.get_kwargs_profile()
         if profile.avatars.count() == 0:
             raise NotFound()
         current_avatar = get_current_avatar_or_gap_avatar(profile)

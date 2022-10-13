@@ -10,12 +10,20 @@ def available_pictures():
     return Picture.objects.all()
 
 
+def does_picture_exist(picture_id):
+    return Picture.objects.filter(id=picture_id).exists()
+
+
 def picture_by_id(picture_id):
     return Picture.objects.get(id=picture_id)
 
 
 def pictures_by_profile(profile: Profile):
-    return Picture.objects.filter(profile=profile)
+    return Picture.objects.filter(profile=profile).order_by('-date')
+
+
+def pictures_by_filter(**kwarg):
+    return Picture.objects.filter(**kwarg).order_by('-date')
 
 
 def create_picture(profile: Profile, picture_bytes, extension: str, text: str = None, link_url: str = None):

@@ -17,7 +17,7 @@ class PictureAccessPermission(permissions.BasePermission):
 
     def has_permission(self, request, view):
         if request.method == POST:
-            return PostPictureAccessPermission().has_object_permission(request, view)
+            return PostPictureAccessPermission().has_permission(request, view)
 
     def has_object_permission(self, request, view, picture_obj):
         if request.method == GET:

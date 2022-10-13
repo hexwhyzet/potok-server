@@ -29,7 +29,7 @@ SECRET_KEY = secrets["django_secret_key"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [config["main_server_ip"], config["grabber_server_url"], "127.0.0.1", "localhost"]
+ALLOWED_HOSTS = [config["main_server_ip"], config["grabber_server_ip"], "localhost", "10.0.2.2", "127.0.0.1"]
 
 EMAIL_HOST = config["email_host"]
 EMAIL_USE_TLS = True
@@ -102,11 +102,9 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
         'potok_users.api.users.serializers.JWTAuthentication',
     ),
-    # 'DEFAULT_RENDERER_CLASSES': (
-    #     'potok_app.renderers.PotokJSONRenderer',
-    # ),
 }
 
 MIDDLEWARE = [

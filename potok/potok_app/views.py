@@ -30,8 +30,31 @@
 # config = Config()
 #
 # logger = logging.getLogger(__name__)
-#
-#
+from django.http import Http404
+from rest_framework.renderers import TemplateHTMLRenderer
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from potok_app.api.pictures.serializers import SizesMixin
+from potok_app.models import Picture
+from potok_app.services.share.share import get_share_by_token, does_share_exist
+
+
+class ShareView(APIView):
+    authentication_classes = []
+    permission_classes = []
+    renderer_classes = [TemplateHTMLRenderer]
+
+    def get(self, request, token):
+        if not does_share_exist(token):
+            raise Http404
+        share = get_share_by_token(token)
+        if isinstance(share.content_object, Picture):
+            picture: Picture = share.content_object
+            sizes = SizesMixin().get_sizes(picture)
+            return Response({'picture_url': sizes[-1]['url']}, template_name='share/picture.html')
+        raise Http404
+
 # def construct_app_response(status, content):
 #     response = {
 #         "status": status,
@@ -85,7 +108,7 @@
 #         "are_liked_pictures_available": are_liked_pictures_available(user_profile,
 #                                                                      profile) if user_profile is not None else None,
 #         "name": profile.name or "No name",
-#         "attachments": construct_attachments(profile.attachments.all()),
+#         "profile_attachments": construct_attachments(profile.profile_attachments.all()),
 #         "screen_name": profile.screen_name or "unknown",
 #         "description": profile.description or None,
 #         "subs_num": profile.subs_num if user_profile is not None else None,
@@ -112,8 +135,8 @@
 #     return response_content
 #
 #
-# def construct_attachments(attachments: List[ProfileAttachment]):
-#     return list(map(construct_attachment, attachments))
+# def construct_attachments(profile_attachments: List[ProfileAttachment]):
+#     return list(map(construct_attachment, profile_attachments))
 #
 #
 # def construct_profiles(profiles: list[Profile], user_profile: Profile = None):

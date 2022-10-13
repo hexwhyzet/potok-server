@@ -13,6 +13,7 @@ from potok_users.services.verification_codes import create_account_verification_
 
 
 class AuthorizationViewSet(GenericViewSet):
+    authentication_classes = []
     permission_classes = []
     serializer_class = AuthorizationSerializer
 

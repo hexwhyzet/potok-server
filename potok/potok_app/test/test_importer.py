@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from potok_app import importer
+from potok_app.api import importer
 
 
 class RedditGapPictureCase(TestCase):

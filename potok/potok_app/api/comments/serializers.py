@@ -1,12 +1,11 @@
 from rest_framework import serializers
 
 from potok_app.api.common_serializers import UnixEpochDateField
-from potok_app.api.profiles.serializers import ProfilePreviewMixin
 from potok_app.models import Comment
 from potok_app.services.comment.comment import create_comment
 
 
-class CommentSerializer(serializers.ModelSerializer, ProfilePreviewMixin):
+class CommentSerializer(serializers.ModelSerializer):
     date = UnixEpochDateField()
 
     def create(self, validated_data):

@@ -2,10 +2,14 @@ import json
 import os
 
 import requests
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework import status
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.response import Response
 
 from potok import settings
 from potok_app.config import Config, Secrets
-from potok_app.functions import extension_from_url, timestamp_to_date
+from potok_app.functions import timestamp_to_date
 from potok_app.models import ProfileAttachment
 from potok_app.services.picture.side_service_avatar import get_or_create_side_service_avatar, \
     does_side_service_avatar_exist
@@ -18,6 +22,26 @@ from potok_users.models import User
 
 secrets = Secrets()
 config = Config()
+
+
+@api_view(['POST'])
+@csrf_exempt
+@authentication_classes([])
+@permission_classes([])
+def import_profiles(request):
+    post_json = request.POST["archive"]
+    profiles_json_parser(post_json)
+    return Response(status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@csrf_exempt
+@authentication_classes([])
+@permission_classes([])
+def import_pictures(request):
+    post_json = request.POST["archive"]
+    pics_json_parser(post_json)
+    return Response(status=status.HTTP_200_OK)
 
 
 def downloaded_picture_is_not_reddit_gap_picture(picture_data: bytes):
@@ -40,7 +64,6 @@ def pics_json_parser(pictures_json):
     {
         'source_picture_id': minor id of picture in database
         'source_profile_id': minor id of profile in database
-        'size': resolution of picture, example: 1280
         'date': time in UNIX format
         'url': url to picture on foreign server
         'source': example: vk
@@ -65,11 +88,9 @@ def pics_json_parser(pictures_json):
             date = timestamp_to_date(side_server_picture_dict['date'])
 
             get_or_create_side_service_picture(profile=pic_profile,
-                                               minor_id=side_server_picture_dict[
-                                                   'source_picture_id'],
+                                               minor_id=side_server_picture_dict['source_picture_id'],
                                                source_url=side_server_picture_dict['url'],
                                                picture_bytes=picture_bytes,
-                                               extension=side_server_picture_dict['source_url'],
                                                date=date)
 
 
@@ -81,7 +102,6 @@ def profiles_json_parser(profiles_json):
             'name': not unique name of profile, example: YOUNG BIDLO BOYS
             'screen name': unique name of profile, example: youngbidlo
             'avatar_url': url to avatar on foreign server
-            'avatar_size': size of avatar picture, example: 1280
             'source': example: vk
         }
         """
@@ -94,7 +114,7 @@ def profiles_json_parser(profiles_json):
             name=side_service_profile_dict['name'],
             screen_name=side_service_profile_dict['screen_name'])
 
-        tag = ProfileAttachment.Tag.Custom
+        tag = ProfileAttachment.Tag.Web
         if source == 'vk':
             tag = ProfileAttachment.Tag.VK
         if source == 'reddit':
@@ -112,10 +132,8 @@ def profiles_json_parser(profiles_json):
         avatar_url = side_service_profile_dict['avatar_url']
 
         if not does_side_service_avatar_exist(profile, avatar_url):
-            extension = extension_from_url(avatar_url)
             picture_bytes = requests.get(avatar_url).content
             if downloaded_picture_is_not_reddit_gap_picture(picture_bytes):
                 get_or_create_side_service_avatar(profile=profile,
                                                   source_url=avatar_url,
-                                                  picture_bytes=picture_bytes,
-                                                  extension=extension)
+                                                  picture_bytes=picture_bytes)

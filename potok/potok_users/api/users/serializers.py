@@ -3,10 +3,11 @@ from string import ascii_lowercase, ascii_uppercase, digits
 import jwt
 from django.conf import settings
 from rest_framework import authentication, exceptions, serializers
+from rest_framework.validators import UniqueValidator
 
 from potok_users.config import Config
 from potok_users.models import User
-from potok_users.services.verification_codes import create_account_verification_code
+from potok_users.services.users import available_users
 
 config = Config()
 
@@ -48,17 +49,10 @@ class JWTAuthentication(authentication.BaseAuthentication):
         auth_header_prefix = self.authentication_header_prefix.lower()
 
         if not auth_header:
-            return None
+            raise exceptions.AuthenticationFailed('auth_header is not specified')
 
-        if len(auth_header) == 1:
-            # Invalid token header. No credentials provided. Do not attempt to
-            # authenticate.
-            return None
-
-        elif len(auth_header) > 2:
-            # Invalid token header. The Token string should not contain spaces.
-            # Do not attempt to authenticate.
-            return None
+        if len(auth_header) == 1 or len(auth_header) > 2:
+            raise exceptions.AuthenticationFailed('Invalid token header. No credentials provided.')
 
         # The JWT library we're using can't handle the `byte` type, which is
         # commonly used by standard libraries in Python 3. To get around this,
@@ -69,9 +63,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
         token = auth_header[1].decode('utf-8')
 
         if prefix.lower() != auth_header_prefix:
-            # The auth header prefix is not what we expected. Do not attempt to
-            # authenticate.
-            return None
+            raise exceptions.AuthenticationFailed('The auth header prefix is not what we expected.')
 
         # By now, we are sure there is a *chance* that authentication will
         # succeed. We delegate the actual credentials authentication to the
@@ -108,23 +100,32 @@ class AuthorizationSerializer(serializers.ModelSerializer):
     Email, username, and password are required.
     Returns a JSON web token.
     """
+    email = serializers.EmailField(
+        validators=[UniqueValidator(queryset=available_users())],
+        write_only=True,
+        required=True,
+    )
+
     # The password must be validated and should not be read by the client
     password = serializers.CharField(
         max_length=MAX_PASSWORD_LENGTH,
         min_length=MIN_PASSWORD_LENGTH,
         write_only=True,
+        required=True,
     )
 
     # The client should not be able to send a token along with a registration
     # request. Making `token` read-only handles that for us.
     token = serializers.CharField(max_length=255, read_only=True)
 
+    is_anonymous = serializers.SerializerMethodField()
+
+    def get_is_anonymous(self, user):
+        return not user.is_authenticated
+
     class Meta:
         model = User
-        fields = ('email', 'password', 'token',)
-        extra_kwargs = {
-            'email': {'write_only': True}
-        }
+        fields = ('email', 'password', 'token', 'is_anonymous')
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)

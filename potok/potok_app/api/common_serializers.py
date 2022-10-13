@@ -14,3 +14,8 @@ class UnixEpochDateField(serializers.DateTimeField):
 
     def to_internal_value(self, value):
         return datetime.datetime.fromtimestamp(int(value))
+
+
+class UserProfileContext(serializers.Serializer):
+    def get_user_profile(self):
+        return self.context['request'].user.profile

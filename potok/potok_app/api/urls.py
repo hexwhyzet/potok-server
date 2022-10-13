@@ -1,25 +1,35 @@
-from django.conf.urls import url
-from django.urls import include
-from rest_framework.routers import DefaultRouter
+from django.urls import include, re_path, path
+from rest_framework.routers import SimpleRouter
 from rest_framework_nested import routers
 
 from potok_app.api.avatars.views import AvatarViewSet
 from potok_app.api.comments.views import CommentViewSet
+from potok_app.api.importer import import_profiles, import_pictures
 from potok_app.api.pictures.views import PictureViewSet
+from potok_app.api.profile_attachments.views import ProfileAttachmentViewSet
 from potok_app.api.profiles.views import ProfileViewSet
 
-router = DefaultRouter()
+urlpatterns = []
+
+router = SimpleRouter()
 router.register(r'profiles', ProfileViewSet, basename='profile')
+urlpatterns.append(re_path('', include(router.urls)))
 
-profile_router = routers.NestedSimpleRouter(router, r'profiles', lookup='profile')
-profile_router.register(r'pictures', PictureViewSet, basename='picture')
-profile_router.register(r'avatars', AvatarViewSet, basename='avatar')
+nested_profile_router = routers.NestedSimpleRouter(router, r'profiles', lookup='profile')
+router = SimpleRouter()
+for iter_router in [router, nested_profile_router]:
+    iter_router.register(r'pictures', PictureViewSet, basename='picture')
+    iter_router.register(r'avatars', AvatarViewSet, basename='avatar')
+    iter_router.register(r'attachments', ProfileAttachmentViewSet, basename='attachment')
+urlpatterns.append(re_path('', include(router.urls)))
+urlpatterns.append(re_path('', include(nested_profile_router.urls)))
 
-picture_router = routers.NestedSimpleRouter(profile_router, r'pictures', lookup='picture')
-picture_router.register(r'comments', CommentViewSet, basename='comment')
+nested_picture_router = routers.NestedSimpleRouter(router, r'pictures', lookup='picture')
+router = SimpleRouter()
+for iter_router in [router, nested_picture_router]:
+    iter_router.register(r'comments', CommentViewSet, basename='comment')
+urlpatterns.append(re_path('', include(router.urls)))
+urlpatterns.append(re_path('', include(nested_picture_router.urls)))
 
-urlpatterns = [
-    url(r'^', include(router.urls)),
-    url(r'^', include(profile_router.urls)),
-    url(r'^', include(picture_router.urls)),
-]
+urlpatterns.append(path('send_profiles', import_profiles))
+urlpatterns.append(path('send_pictures', import_pictures))
